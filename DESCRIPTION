@@ -1,0 +1,18 @@
+Package: functions
+Type: Package
+Title: functions that might be helpful
+Version: 0.0.1
+Author: Matthew Lee
+Maintainer: Matthew Lee <matthewlee821@gmail.com>
+Description: package of useful functions to make life easier...
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports: 
+    AICcmodavg,
+    stats,
+    survival,
+    utils
+

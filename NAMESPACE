@@ -1,0 +1,3 @@
+exportPattern("^[[:alpha:]]+")
+importFrom("stats", "as.formula", "lm")
+importFrom("utils", "combn")
