@@ -21,7 +21,7 @@
 model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, model) {
   # lm() linear model ====
   if (model == "lm") {
-    formulas <- unlist(lapply(1:1, function(n) {
+    formulas <- unlist(lapply(1:length(covariates), function(n) {
       utils::combn(covariates, n,
         FUN = function(row) {
           paste0(
@@ -40,7 +40,7 @@ model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, mode
 
   # clogit() logistic model ====
   else if (model == "clogit") {
-    formulas <- unlist(lapply(1:1, function(n) {
+    formulas <- unlist(lapply(1:length(covariates), function(n) {
       utils::combn(covariates, n,
         FUN = function(row) {
           paste0(
