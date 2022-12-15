@@ -62,7 +62,7 @@ model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, mode
       survival::clogit(as.formula(frml), data = data, method = "exact", na.action = "na.exclude")
     })
     names(models) <- formulas # rename models using formula
-    raw_model <- survival::clogit(mtcars[[outcome]] ~ mtcars[[exposure]], data = mtcars, method = "exact", na.action = "na.exclude")
+    raw_model <- survival::clogit(data[[outcome]] ~ data[[exposure]], data = data, method = "exact", na.action = "na.exclude")
 
     ## model selection paramaters
     model_selection <- AICcmodavg::aictab(cand.set = models)
