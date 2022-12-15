@@ -26,6 +26,9 @@ an object from AICcmodavg::aictab()
 Provide akaike information criterion for all possible covariate combinations
 }
 \examples{
-model_test(data = my_data, exposure = "BMI", outcome = "breast_cancer", covariates = c("age", "sex"),  match_ID = "match_caseset", model = "clogit")
-
+model_test(data = mtcars,
+           exposure = "hp",
+           outcome = "mpg",
+           covariates = c("cyl", "disp", "drat", "wt", "qsec", "vs", "am", "gear", "carb"),
+           model = "lm")
 }

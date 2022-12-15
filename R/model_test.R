@@ -10,13 +10,11 @@
 #' @param model name of the model you want to run: "lm" = stats::lm(); "clogit" = survival::clogit()
 #' @returns an object from AICcmodavg::aictab()
 #' @examples
-#' model_test(data = my_data,
-#' exposure = "BMI",
-#' outcome = "breast_cancer",
-#' covariates = c("age", "sex"),
-#' match_ID = "match_caseset",
-#' model = "clogit")
-#'
+#' model_test(data = mtcars,
+#'            exposure = "hp",
+#'            outcome = "mpg",
+#'            covariates = c("cyl", "disp", "drat", "wt", "qsec", "vs", "am", "gear", "carb"),
+#'            model = "lm")
 
 model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, model) {
   # lm() linear model ====
