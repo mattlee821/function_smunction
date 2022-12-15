@@ -17,6 +17,7 @@
 #'            model = "lm")
 
 model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, model) {
+
   # lm() linear model ====
   if (model == "lm") {
     formulas <- unlist(lapply(1:length(covariates), function(n) {
@@ -29,6 +30,10 @@ model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, mode
         }
       )
     }))
+    raw_model <- paste0(outcome, " ~ ", exposure)
+    formulas <- c(raw_model, formulas)
+
+    ## run models
     models <- lapply(formulas, function(frml) stats::lm(frml, data = data))
     names(models) <- formulas # rename models using formula
 
@@ -49,12 +54,15 @@ model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, mode
         }
       )
     }))
+    raw_model <- paste0(outcome, " ~ ", exposure, " + ", "strata(", match_ID, ")")
+    formulas <- c(raw_model, formulas)
 
     ## run models
     models <- lapply(formulas, function(frml) {
       survival::clogit(as.formula(frml), data = data, method = "exact", na.action = "na.exclude")
     })
     names(models) <- formulas # rename models using formula
+    raw_model <- survival::clogit(mtcars[[outcome]] ~ mtcars[[exposure]], data = mtcars, method = "exact", na.action = "na.exclude")
 
     ## model selection paramaters
     model_selection <- AICcmodavg::aictab(cand.set = models)
