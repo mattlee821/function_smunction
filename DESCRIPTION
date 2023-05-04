@@ -14,5 +14,12 @@ Imports:
     AICcmodavg,
     stats,
     survival,
-    utils
-
+    utils,
+    plyr,
+    dplyr,
+    ggplot2,
+    ggforestplot,
+    ggstance,
+    scales,
+    rlang,
+    wesanderson
