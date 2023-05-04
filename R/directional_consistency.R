@@ -1,4 +1,4 @@
-# function for to make a data_frame of directional consistency results
+# function to make a data_frame of directional consistency results
 
 #' @title Workout consistency of effect estimates
 #' @description Before using, your data needs to be in wide format, e.g., rows are exposures and columns are the betas for those IDs you want to check consistency for
