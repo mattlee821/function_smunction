@@ -13,7 +13,8 @@ qqplot <- function(df,
                       ci = 0.95,
                       point_size = 2,
                       point_colour = "black",
-                      point_alpha = 0.8
+                      point_alpha = 0.8,
+                      title = NA
                       ) {
   n  <- length(df)
   df <- data.frame(
@@ -29,6 +30,7 @@ qqplot <- function(df,
     geom_abline(intercept = 0, slope = 1, alpha = 0.5) +
     geom_line(aes(expected, cupper), linetype = 2) +
     geom_line(aes(expected, clower), linetype = 2) +
+    ggtitle(title) +
     xlab(log10Pe) +
     ylab(log10Po) +
 
