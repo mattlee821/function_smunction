@@ -5,6 +5,7 @@
 #' @param point_size the size of the points - defaults to 2
 #' @param point_colour the colour of the points - defaults to black
 #' @param point_alpha the alpha/transparency of the points - defaults to 0.8
+#' @param title a ggtitle placed top left of the plot
 #' @export
 #' @import ggplot2
 #' @import cowplot

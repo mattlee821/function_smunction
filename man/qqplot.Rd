@@ -9,7 +9,8 @@ qqplot(
   ci = 0.95,
   point_size = 2,
   point_colour = "black",
-  point_alpha = 0.8
+  point_alpha = 0.8,
+  title = NA
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ qqplot(
 \item{point_colour}{the colour of the points - defaults to black}
 
 \item{point_alpha}{the alpha/transparency of the points - defaults to 0.8}
+
+\item{title}{a ggtitle placed top left of the plot}
 }
 \description{
 qqplot
