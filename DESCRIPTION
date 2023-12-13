@@ -23,3 +23,5 @@ Imports:
     scales,
     rlang,
     wesanderson
+Remotes:
+    NightingaleHealth/ggforestplot
