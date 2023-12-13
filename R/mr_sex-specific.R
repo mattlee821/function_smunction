@@ -16,8 +16,8 @@ harmonise_data_sex <- function(data_exposure, data_outcome, harmonise_action){
 
   for (i in levels_sex) {
     # Filter using dplyr::filter
-    a <- data_exposure %>% filter(sex == i)
-    b <- data_outcome %>% filter(sex == i)
+    a <- data_exposure %>% dplyr::filter(sex == i)
+    b <- data_outcome %>% dplyr::filter(sex == i)
 
     # Check if data is available for harmonization
     if (nrow(a) > 0 && nrow(b) > 0) {
@@ -50,7 +50,7 @@ mr_sex <- function(data_harmonise, methods){
 
   for (i in levels_sex) {
     # Filter using dplyr::filter
-    a <- data_harmonise %>% filter(sex == i)
+    a <- data_harmonise %>% dplyr::filter(sex == i)
 
     # Check if data is available for MR analysis
     if (nrow(a) > 0) {
@@ -82,7 +82,7 @@ mr_singlesnp_sex <- function(data_harmonise){
 
   for (i in levels_sex) {
     # Filter using dplyr::filter
-    a <- data_harmonise %>% filter(sex == i)
+    a <- data_harmonise %>% dplyr::filter(sex == i)
 
     # Check if data is available for MR analysis
     if (nrow(a) > 0) {
@@ -114,7 +114,7 @@ mr_heterogeneity_sex <- function(data_harmonise, methods_heterogeneity){
 
   for (i in levels_sex) {
     # Filter using dplyr::filter
-    a <- data_harmonise %>% filter(sex == i)
+    a <- data_harmonise %>% dplyr::filter(sex == i)
 
     # Check if data is available for MR analysis
     if (nrow(a) > 0) {
@@ -146,7 +146,7 @@ mr_pleiotropy_test_sex <- function(data_harmonise){
 
   for (i in levels_sex) {
     # Filter using dplyr::filter
-    a <- data_harmonise %>% filter(sex == i)
+    a <- data_harmonise %>% dplyr::filter(sex == i)
 
     # Check if data is available for MR analysis
     if (nrow(a) > 0) {
@@ -177,7 +177,7 @@ mr_leaveoneout_sex <- function(data_harmonise){
 
   for (i in levels_sex) {
     # Filter using dplyr::filter
-    a <- data_harmonise %>% filter(sex == i)
+    a <- data_harmonise %>% dplyr::filter(sex == i)
 
     # Check if data is available for MR analysis
     if (nrow(a) > 0) {
