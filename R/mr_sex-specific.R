@@ -5,16 +5,29 @@
 #' @param harmonise_action action for harmonising alleles (1,2,3)
 #' @note
 #' you must have a single column called 'sex' in your exposure and outcome data
-
 harmonise_data_sex <- function(data_exposure, data_outcome, harmonise_action){
+  # Check if 'sex' is present in both data frames
+  if (!("sex" %in% names(data_exposure)) || !("sex" %in% names(data_outcome))) {
+    stop("The 'sex' variable is not present in both data frames.")
+  }
+
   levels_sex <- unique(c(data_exposure$sex, data_outcome$sex))
   list_harmonise <- list()
+
   for (i in levels_sex) {
+    # Filter using dplyr::filter
     a <- data_exposure %>% filter(sex == i)
     b <- data_outcome %>% filter(sex == i)
-    data_harmonise <- harmonise_data(a, b, action = harmonise_action)
-    list_harmonise[[i]] <- data_harmonise
+
+    # Check if data is available for harmonization
+    if (nrow(a) > 0 && nrow(b) > 0) {
+      data_harmonise <- harmonise_data(a, b, action = harmonise_action)
+      list_harmonise[[i]] <- data_harmonise
+    } else {
+      warning(paste("No data for sex =", i, ". Skipping harmonization for this level."))
+    }
   }
+
   data_harmonise <- bind_rows(list_harmonise)
   rm(levels_sex, list_harmonise, i, a, b)
   return(data_harmonise)
@@ -26,15 +39,28 @@ harmonise_data_sex <- function(data_exposure, data_outcome, harmonise_action){
 #' @param methods a list of methds supplied to "method_list"
 #' @note
 #' you must have a single column called 'sex' in your harmonised data frame
-
 mr_sex <- function(data_harmonise, methods){
+  # Check if 'sex' is present in the data frame
+  if (!("sex" %in% names(data_harmonise))) {
+    stop("The 'sex' variable is not present in the data frame.")
+  }
+
   levels_sex <- unique(data_harmonise$sex)
   list_mr <- list()
+
   for (i in levels_sex) {
+    # Filter using dplyr::filter
     a <- data_harmonise %>% filter(sex == i)
-    data_mr <- mr(a, method_list = methods)
-    list_mr[[i]] <- data_mr
+
+    # Check if data is available for MR analysis
+    if (nrow(a) > 0) {
+      data_mr <- mr(a, method_list = methods)
+      list_mr[[i]] <- data_mr
+    } else {
+      warning(paste("No data for sex =", i, ". Skipping MR analysis for this level."))
+    }
   }
+
   data_mr <- bind_rows(list_mr)
   rm(levels_sex, list_mr, i, a)
   return(data_mr)
@@ -46,13 +72,27 @@ mr_sex <- function(data_harmonise, methods){
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
 mr_singlesnp_sex <- function(data_harmonise){
+  # Check if 'sex' is present in the data frame
+  if (!("sex" %in% names(data_harmonise))) {
+    stop("The 'sex' variable is not present in the data frame.")
+  }
+
   levels_sex <- unique(data_harmonise$sex)
   list_sensitivity <- list()
+
   for (i in levels_sex) {
+    # Filter using dplyr::filter
     a <- data_harmonise %>% filter(sex == i)
-    data_sensitivity <- mr_singlesnp(a)
-    list_sensitivity[[i]] <- data_sensitivity
+
+    # Check if data is available for MR analysis
+    if (nrow(a) > 0) {
+      data_sensitivity <- mr_singlesnp(a)
+      list_sensitivity[[i]] <- data_sensitivity
+    } else {
+      warning(paste("No data for sex =", i, ". Skipping MR analysis for this level."))
+    }
   }
+
   data_sensitivity <- bind_rows(list_sensitivity)
   return(data_sensitivity)
 }
@@ -64,13 +104,27 @@ mr_singlesnp_sex <- function(data_harmonise){
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
 mr_heterogeneity_sex <- function(data_harmonise, methods_heterogeneity){
+  # Check if 'sex' is present in the data frame
+  if (!("sex" %in% names(data_harmonise))) {
+    stop("The 'sex' variable is not present in the data frame.")
+  }
+
   levels_sex <- unique(data_harmonise$sex)
   list_sensitivity <- list()
+
   for (i in levels_sex) {
+    # Filter using dplyr::filter
     a <- data_harmonise %>% filter(sex == i)
-    data_sensitivity <- mr_heterogeneity(a, method_list = methods_heterogeneity)
-    list_sensitivity[[i]] <- data_sensitivity
+
+    # Check if data is available for MR analysis
+    if (nrow(a) > 0) {
+      data_sensitivity <- mr_heterogeneity(a, method_list = methods_heterogeneity)
+      list_sensitivity[[i]] <- data_sensitivity
+    } else {
+      warning(paste("No data for sex =", i, ". Skipping MR analysis for this level."))
+    }
   }
+
   data_sensitivity <- bind_rows(list_sensitivity)
   return(data_sensitivity)
 }
@@ -80,14 +134,29 @@ mr_heterogeneity_sex <- function(data_harmonise, methods_heterogeneity){
 #' @param data_harmonise harmonised data frame
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
+
 mr_pleiotropy_test_sex <- function(data_harmonise){
+  # Check if 'sex' is present in the data frame
+  if (!("sex" %in% names(data_harmonise))) {
+    stop("The 'sex' variable is not present in the data frame.")
+  }
+
   levels_sex <- unique(data_harmonise$sex)
   list_sensitivity <- list()
+
   for (i in levels_sex) {
+    # Filter using dplyr::filter
     a <- data_harmonise %>% filter(sex == i)
-    data_sensitivity <- mr_pleiotropy_test(a)
-    list_sensitivity[[i]] <- data_sensitivity
+
+    # Check if data is available for MR analysis
+    if (nrow(a) > 0) {
+      data_sensitivity <- mr_pleiotropy_test(a)
+      list_sensitivity[[i]] <- data_sensitivity
+    } else {
+      warning(paste("No data for sex =", i, ". Skipping MR analysis for this level."))
+    }
   }
+
   data_sensitivity <- bind_rows(list_sensitivity)
   return(data_sensitivity)
 }
@@ -98,13 +167,27 @@ mr_pleiotropy_test_sex <- function(data_harmonise){
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
 mr_leaveoneout_sex <- function(data_harmonise){
+  # Check if 'sex' is present in the data frame
+  if (!("sex" %in% names(data_harmonise))) {
+    stop("The 'sex' variable is not present in the data frame.")
+  }
+
   levels_sex <- unique(data_harmonise$sex)
   list_sensitivity <- list()
+
   for (i in levels_sex) {
+    # Filter using dplyr::filter
     a <- data_harmonise %>% filter(sex == i)
-    data_sensitivity <- mr_leaveoneout(a)
-    list_sensitivity[[i]] <- data_sensitivity
+
+    # Check if data is available for MR analysis
+    if (nrow(a) > 0) {
+      data_sensitivity <- mr_leaveoneout(a)
+      list_sensitivity[[i]] <- data_sensitivity
+    } else {
+      warning(paste("No data for sex =", i, ". Skipping MR analysis for this level."))
+    }
   }
+
   data_sensitivity <- bind_rows(list_sensitivity)
   return(data_sensitivity)
 }
