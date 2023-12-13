@@ -2,7 +2,7 @@
 #'
 #' Create funnel plot from single SNP analyses.
 #'
-#' @param singlesnp_results from [mr_singlesnp()].
+#' @param singlesnp_results from mr_singlesnp().
 #'
 #' @export
 #' @return List of plots
@@ -13,7 +13,7 @@ mr_funnel_plot <- function(singlesnp_results)
     d <- plyr::mutate(d)
     if(sum(!grepl("All", d$SNP)) < 2) {
       return(
-        blank_plot("Insufficient number of SNPs")
+        functions::blank_plot("Insufficient number of SNPs")
       )
     }
     am <- grep("All", d$SNP, value=TRUE)
@@ -28,7 +28,7 @@ mr_funnel_plot <- function(singlesnp_results)
                                               "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6",
                                               "#6a3d9a", "#ffff99", "#b15928")) +
       ggplot2::labs(y=expression(1/SE[IV]), x=expression(beta[IV]), colour="MR Method") +
-      ggplot2::ggtitle(paste0("exposure = ", d$exposure[1], "; outcome = ", d$outcome[1])) +
+      ggplot2::ggtitle(paste0("exposure = ", d$id.exposure[1], "; outcome = ", d$id.outcome[1])) +
       ggplot2::theme(legend.position="top", legend.direction="vertical")
   })
   res

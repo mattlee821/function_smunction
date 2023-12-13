@@ -36,25 +36,10 @@ mr_scatter_plot <- function (mr_results, dat)
                            ggplot2::geom_errorbarh(ggplot2::aes(xmin = beta.exposure - se.exposure, xmax = beta.exposure + se.exposure), colour = "grey", height = 0) +
                            ggplot2::geom_point(ggplot2::aes(text = paste("SNP:", SNP))) +
                            ggplot2::geom_abline(data = mrres, ggplot2::aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
-                           ggplot2::labs(colour = "MR Test", x = paste("SNP effect on", d$exposure[1]), y = paste("SNP effect on", d$outcome[1])) +
+                           ggplot2::labs(colour = "MR Test", x = paste("SNP effect on", d$exposure[1]), y = paste("SNP effect on", d$outcome[1]), title = paste(d$id.exposure[1], "on", d$outcome[1])) +
                            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal") +
-                           ggplot2::guides(colour = ggplot2::guide_legend(ncol = 2))
+                           ggplot2::guides(colour = ggplot2::guide_legend(nrow = 1))
                          })
   mrres
-  }
-
-#' Create a blank ggplot2 plot
-#'
-#' This function creates a blank ggplot2 plot with no data or aesthetics
-#'
-#' @return A ggplot2 plot object
-#' @param message a message that no plot was made
-#' @export
-blank_plot <- function(message)
-{
-  requireNamespace("ggplot2", quietly=TRUE)
-  ggplot2::ggplot(data.frame(a=0,b=0,n=message)) +
-    ggplot2::geom_text(ggplot2::aes(x=a,y=b,label=n)) +
-    ggplot2::labs(x=NULL,y=NULL) +
-    ggplot2::theme(axis.text=ggplot2::element_blank(), axis.ticks=ggplot2::element_blank())
 }
+
