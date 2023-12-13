@@ -72,7 +72,7 @@ mr_scatter_plot <- function (mr_results, dat)
                            ggplot2::geom_errorbarh(ggplot2::aes(xmin = beta.exposure - se.exposure, xmax = beta.exposure + se.exposure), colour = "grey", height = 0) +
                            ggplot2::geom_point(ggplot2::aes(text = paste("SNP:", SNP))) +
                            ggplot2::geom_abline(data = mrres, ggplot2::aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
-                           ggplot2::labs(colour = "MR Test", x = paste("SNP effect on", d$exposure[1]), y = paste("SNP effect on", d$outcome[1]), title = paste(d$id.exposure[1], "on", d$outcome[1])) +
+                           ggplot2::labs(colour = "MR Test", x = paste("SNP effect on", d$exposure[1]), y = paste("SNP effect on", d$outcome[1]), title = paste(d$id.exposure[1], "on", d$id.outcome[1])) +
                            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal") +
                            ggplot2::guides(colour = ggplot2::guide_legend(nrow = 1))
                        })
