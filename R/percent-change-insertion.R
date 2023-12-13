@@ -7,7 +7,7 @@
 #' @param col_name the name of the column to calculate percent change for
 #' @returns a dataframe
 #' @note
-#' for (col_name in colnames(data2)[-1]) {
+#' for (col_name in colnames(data2)) {
 #'   data2 <- calculate_and_insert_percent_change(data1, data2, col_name)}
 
 
