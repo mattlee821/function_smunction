@@ -22,6 +22,14 @@ Imports:
     ggstance,
     scales,
     rlang,
-    wesanderson
+    wesanderson,
+    TwoSampleMR,
+    data.table,
+    genetics.binaRies,
+    gwasvcf
 Remotes:
-    NightingaleHealth/ggforestplot
+    NightingaleHealth/ggforestplot,
+    MRCIEU/genetics.binaRies,
+    MRCIEU/gwasvcf,
+    MRCIEU/TwoSampleMR,
+    MRCIEU/ieugwasr
