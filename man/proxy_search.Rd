@@ -8,7 +8,11 @@ proxy_search(
   data_exposure,
   data_outcome,
   data_outcome_path,
-  data_reference_path
+  data_reference,
+  data_reference_path,
+  tag_r2 = 0.8,
+  tag_kb = 5000,
+  tag_nsnp = 5000
 )
 }
 \arguments{
@@ -18,7 +22,15 @@ proxy_search(
 
 \item{data_outcome_path}{file path used for read_outcome_data()}
 
+\item{data_reference}{reference data; bim file (i.e., paste(data_reference_path, ".bim"))}
+
 \item{data_reference_path}{file path for your downloaded reference panel}
+
+\item{tag_r2}{r2 for proxy SNP; from get_ld_proxies(); default = 0.8}
+
+\item{tag_kb}{window to look for proxy SNPs; from get_ld_proxies(); default = 5000}
+
+\item{tag_nsnp}{from get_ld_proxies(); default = 5000}
 }
 \value{
 a data frame
