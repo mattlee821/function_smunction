@@ -43,7 +43,7 @@ proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_re
                                        searchspace = NULL,
                                        tag_kb = tag_kb,
                                        tag_nsnp = tag_nsnp,
-                                       tag_r2 = R2,
+                                       tag_r2 = tag_r2,
                                        threads = 1,
                                        out = tempfile())
   ## format proxy data: change column order and names, add proxy.outcome = TRUE
