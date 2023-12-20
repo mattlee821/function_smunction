@@ -20,21 +20,27 @@ proxy_search(
 
 \item{data_outcome}{outcome data frame}
 
-\item{data_outcome_path}{file path used for read_outcome_data()}
+\item{data_outcome_path}{file path used for \code{read_outcome_data()}}
 
-\item{data_reference}{reference data; bim file (i.e., paste(data_reference_path, ".bim"))}
+\item{data_reference}{reference data; bim file}
 
 \item{data_reference_path}{file path for your downloaded reference panel}
 
-\item{tag_r2}{r2 for proxy SNP; from get_ld_proxies(); default = 0.8}
+\item{tag_r2}{r2 for proxy SNP; from \code{get_ld_proxies()}; default = 0.8}
 
-\item{tag_kb}{window to look for proxy SNPs; from get_ld_proxies(); default = 5000}
+\item{tag_kb}{window to look for proxy SNPs; from \code{get_ld_proxies()}; default = 5000}
 
-\item{tag_nsnp}{from get_ld_proxies(); default = 5000}
+\item{tag_nsnp}{from \code{get_ld_proxies()}; default = 5000}
 }
 \value{
 a data frame
 }
 \description{
-proxy_search: search for proxies when using read_outcome_data()
+This function gets proxy SNPs for MR analyses when using local outcome data.
+It takes formatted exposure and outcome data from \code{TwoSampleMR}, searches for
+missing SNPs in the outcome, identifies which of these missing-SNPs are
+available in the provided reference panel, extracts all proxy-SNPs for the
+missing-SNPs from the reference panel, returns a data frame with the top
+proxy-SNP for each missing-SNP. You MUST have a local reference panel. Only
+works with rsID.
 }
