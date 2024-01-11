@@ -1,0 +1,448 @@
+---
+title: "Imputation comparison test"
+subtitle: "`r params$subtitle`"
+date: "`r format(Sys.time(), '%d-%m-%y')`"
+output:
+  html_document:
+    self_contained: true
+    clean: false
+    page_layout: full
+    title_block_banner: true
+params: 
+  data: "default_data_var"
+  output_dir: "default_output_dir"
+  subtitle: "default_subtitle"
+---
+
+```{r setup, include=FALSE}
+cache_dir <- paste0(output_dir, "/imputation_test_cache/")
+if (!dir.exists(cache_dir)) dir.create(cache_dir)
+
+knitr::opts_chunk$set(include = TRUE, 
+                      echo = FALSE, 
+                      warning = FALSE, 
+                      error = FALSE, 
+                      message = FALSE, 
+                      eval = TRUE, 
+                      cache = TRUE, 
+                      fig.align = 'center',
+                      cache.path = cache_dir
+)
+
+# set arguments
+file_path <- params$file_path
+data <- params$data
+
+knitr::opts_knit$set(root.dir = output_dir)
+set.seed(821)
+
+# environment ====
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+library(tidyr)
+library(caret)
+library(imputeLCMD)
+library(impute) # BiocManager::install("impute")
+library(missForest)
+library(parallel)
+library(doParallel)
+library(pcaMethods)
+library(missMethods)
+library(reshape2)
+library(patchwork)
+library(functions)
+library(wesanderson)
+library(kableExtra)
+
+# source ====
+palette_discrete <- functions::palette()
+```
+
+## Data
+Your data has `r nrow(data)` rows (samples) and `r ncol(data)` columns (features). Every column should be a feature, no additional columns should be included. This is what your data looks like:
+  
+```{r table-data}
+## table
+kableExtra::kbl(head(data), caption = "raw data") %>%
+  kableExtra::kable_styling(full_width = FALSE, 
+                            bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  kableExtra::scroll_box(width = "100%")
+```
+
+```{r percent-missing}
+# percent missing ====
+percent_missing <- as.data.frame(colMeans(is.na(data)) * 100)
+colnames(percent_missing)[1] <- "percent_missing"
+summary_output <- summary(percent_missing$percent_missing)
+# Create a data frame from the summary output
+summary_output <- data.frame(
+  Statistic = names(summary_output),
+  Value = as.numeric(summary_output)
+)
+summary_output <- as.data.frame(t(summary_output))
+colnames(summary_output) <- summary_output[1, ]
+summary_output <- summary_output[2,]
+summary_output <- summary_output %>%
+  mutate_all(as.numeric)
+summary_output <- round(summary_output, 2)
+
+## calculate median peak area
+median_peak_area <- sapply(data, function(col) median(na.omit(col)))
+
+## calculate detection frequency:
+detection_frequency <- sapply(data, function(col) (1 - sum(is.na(col)) / length(col)) * 100)
+
+## combine
+mpa_df <- data.frame(
+  "median peak area" = median_peak_area[1:length((median_peak_area))], 
+  "detection frequency" = detection_frequency[1:length((median_peak_area))])
+
+mpa_df %>%
+  group_by(group = cut(detection_frequency, breaks = seq(0, 100, 10))) %>%
+  summarise(n = n()) -> mpa_df_totals
+
+y_coordinates <- as.numeric(gsub("\\((\\d+),(\\d+)\\]", "\\1.5", mpa_df_totals$group))+4.5
+```
+
+<br>
+
+The below table gives the `summary()` of missingness across your data. The figure gives the median raw intensity of each feature plotted against the detection frequency (calculated as $1 - \text{total NA}$) for each feature; the number of features detected at each 10th percentile is also shown (i.e., if you were to exclude features with > 90% missing this would result in `r mpa_df_totals[1,2]` features being excluded)
+
+```{r table-percent-missing}
+kbl(summary_output, caption = "summary of missingness") %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+```{r plot-missingness, fig.cap='median raw intensity plotted against detection frequency'}
+# visualise missingness ====
+## plot
+plot_mpa_df <- ggplot(mpa_df, aes(`median.peak.area`, `detection.frequency`)) +
+  geom_point(color = palette_discrete[2], size = 0.5) +
+  xlab("median peak area") + ylab("detection frequency (%)") +
+  scale_y_continuous(breaks = seq(0, 100, 10)) +
+  theme_cowplot()
+
+plot_mpa_df + 
+  annotate("text", x = max(mpa_df$median.peak.area) * 1.1, 
+           y = y_coordinates,
+           label = mpa_df_totals$n, colour = palette_discrete[2])
+
+# plot_mpa_df + annotate("text", x = max(mpa_df$median.peak.area)*1.1, y = seq(5, 95, 10),
+#                       label = paste(mpa_df_totals$n), colour = palette_discrete[2])
+```
+
+## Filtered data
+
+```{r data-filter}
+# filtered data frames ====
+## make filtered data for no missing
+data_complete <- data %>%
+  select(where(function(x) all(!is.na(x))))
+## make filtered data for 80% missingness
+## introduce random missing values at specified %; for 80% and 90% need to make sure that all samples have at least one value as this is needed for PCA imputation (this doesnt work perfectly, especially at low N for both sample and feature)
+data_missing_5 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.95, 0.05), size = length(cc), replace = TRUE) ])) # ~5% NAs
+data_missing_10 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.9, 0.1), size = length(cc), replace = TRUE) ])) # ~10% NAs
+data_missing_20 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.8, 0.2), size = length(cc), replace = TRUE) ])) # ~20% NAs
+data_missing_30 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.7, 0.3), size = length(cc), replace = TRUE) ])) # ~30% NAs
+data_missing_40 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.6, 0.4), size = length(cc), replace = TRUE) ])) # ~40% NAs
+data_missing_50 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.5, 0.5), size = length(cc), replace = TRUE) ])) # ~50% NAs
+data_missing_60 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.4, 0.6), size = length(cc), replace = TRUE) ])) # ~60% NAs
+data_missing_70 <- as.data.frame(lapply(data_complete, function(cc) cc[ sample(c(TRUE, NA), prob = c(0.3, 0.7), size = length(cc), replace = TRUE) ])) # ~70% NAs
+data_missing_80 <- as.data.frame(lapply(data_complete, function(cc) {
+  new_cc <- cc[ sample(c(TRUE, NA), prob = c(0.2, 0.8), size = length(cc), replace = TRUE) ]
+  # Ensure at least one non-NA value in each row
+  while (all(is.na(new_cc))) {
+    non_na_index <- sample(length(cc), 1)
+    new_cc[non_na_index] <- sample(cc, 1)  # Replace with a non-NA value from the original column
+  }
+  return(new_cc)
+}))
+data_missing_90 <- as.data.frame(lapply(data_complete, function(cc) {
+  new_cc <- cc[ sample(c(TRUE, NA), prob = c(0.1, 0.9), size = length(cc), replace = TRUE) ]
+  # Ensure at least one non-NA value in each row
+  while (all(is.na(new_cc))) {
+    non_na_index <- sample(length(cc), 1)
+    new_cc[non_na_index] <- sample(cc, 1)  # Replace with a non-NA value from the original column
+  }
+  return(new_cc)
+}))
+
+data_list_missing <- list(data_missing_5, data_missing_10, data_missing_20, data_missing_30, data_missing_40, data_missing_50,
+                          data_missing_60, data_missing_70, data_missing_80, data_missing_90)
+rm(data_missing_5, data_missing_10, data_missing_20, data_missing_30, data_missing_40, data_missing_50,
+   data_missing_60, data_missing_70, data_missing_80, data_missing_90)
+```
+
+After identifying all features with complete data there are `r ncol(data_complete)` features which we use to test imputation methods with. From this complete data we randomly introduce `NA` at specified levels to make 11 new data frames of: 5%, 10%, 20%, 30%, 40%, 50%, 60%, 70%, 80%, and 90% missingness. We perform two checks here, first a check to see if any sample has complete missingness, and the second to see what the % missing actually is. Samples with complete missingness will be excluded from PCA imputation.
+
+```{r missingness-check-percent}
+### test percentage NAs 
+table_missingness_check_percent <- data.frame(
+  sum(is.na(data_list_missing[[1]]))/prod(dim(data_list_missing[[1]])),
+  sum(is.na(data_list_missing[[2]]))/prod(dim(data_list_missing[[2]])),
+  sum(is.na(data_list_missing[[3]]))/prod(dim(data_list_missing[[3]])),
+  sum(is.na(data_list_missing[[4]]))/prod(dim(data_list_missing[[4]])),
+  sum(is.na(data_list_missing[[5]]))/prod(dim(data_list_missing[[5]])),
+  sum(is.na(data_list_missing[[6]]))/prod(dim(data_list_missing[[6]])),
+  sum(is.na(data_list_missing[[7]]))/prod(dim(data_list_missing[[7]])),
+  sum(is.na(data_list_missing[[8]]))/prod(dim(data_list_missing[[8]])),
+  sum(is.na(data_list_missing[[9]]))/prod(dim(data_list_missing[[9]])),
+  sum(is.na(data_list_missing[[10]]))/prod(dim(data_list_missing[[10]]))
+)
+table_missingness_check_percent <- round(table_missingness_check_percent, 2)
+kbl(table_missingness_check_percent, caption = "% missing data for each data frame", col.names = c("5%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%")) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+```{r missingness-check-samples}
+## missingness checks
+### check there are no dataframes with complete missing data for a row; this doesnt work for PCA imputation
+table_missingness_check_complete <- data.frame(
+  nrow(data_list_missing[[1]][apply(data_list_missing[[1]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[2]][apply(data_list_missing[[2]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[3]][apply(data_list_missing[[3]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[4]][apply(data_list_missing[[4]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[5]][apply(data_list_missing[[5]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[6]][apply(data_list_missing[[6]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[7]][apply(data_list_missing[[7]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[8]][apply(data_list_missing[[8]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[9]][apply(data_list_missing[[9]], 1, function(row) all(is.na(row))), ]),
+  nrow(data_list_missing[[10]][apply(data_list_missing[[10]], 1, function(row) all(is.na(row))), ])
+)
+kbl(table_missingness_check_complete, caption = "rows with complete missing data for each data frame %", col.names = c("5%", "10%", "20%", "30%", "40%", "50%", "60%", "70%", "80%", "90%")) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```
+
+## Imputation
+
+```{r imputation-tests, include=FALSE}
+# imputation tests ====
+## 1/5th of the lowest detected value for each feature
+data_list_imputed_5percentile <- lapply(data_list_missing, function(df) {
+  df %>%
+    mutate(across(where(is.numeric), ~ ifelse(is.na(.), 1/5 * min(., na.rm = TRUE), .)))
+})
+
+## left-censored missing data imputation
+data_list_imputed_lcmd <- lapply(data_list_missing, function(x){
+  imputeLCMD::impute.MAR.MNAR(as.matrix(x), 
+                              model.selector = model.Selector(x),
+                              method.MNAR = 'QRILC')})  
+
+## K nearest neighbours
+data_list_imputed_knn <- lapply(data_list_missing, function(x){
+  impute.knn(as.matrix(t(x)), colmax = 1)}) # transpose for function
+data_list_imputed_knn <- lapply(data_list_imputed_knn, function(x){
+  x[[1]] = t(x[[1]]) # transpose output for next steps
+}) 
+
+## probablistic PCA
+### you can not use this if you have any rows with complete missing data, so you need to remove those rows first
+has_all_na <- function(row) {
+  all(is.na(row))
+}
+data_list_imputed_noNA <- lapply(data_list_missing, function(df) { # Remove rows with all NA values from each data frame
+  df[!apply(df, 1, has_all_na), ]
+})
+
+data_list_imputed_ppca <- lapply(data_list_imputed_noNA, function(x){
+  pc <- pca(as.matrix(x), nPcs = 3, method = "ppca")
+  imputed <- completeObs(pc)
+}) 
+
+## Median
+data_list_imputed_med <- lapply(data_list_missing, function(x){
+  impute_median(as.matrix(x), type = "columnwise")
+}) 
+
+## Mean
+data_list_imputed_mean <- lapply(data_list_missing, function(x){
+  impute_mean(as.matrix(x), type = "columnwise")
+}) 
+
+## random forest
+cl <- makeCluster(7)
+registerDoParallel(cl)
+data_list_imputed_rf <- lapply(data_list_missing, function(x){
+  missForest(x, parallelize = 'variables', verbose = TRUE)})
+stopCluster(cl)
+```
+
+```{r imputation-accuracy}
+# imputation accuracy ====
+## RMSE
+idx_na <- lapply(data_list_missing, function(x) which(is.na(x))) # Index for NAs
+## formula:
+## sqrt(mean((unlist(data_missing_train)[idx_na[[1]]] - unlist(data_list_imputed_5percentile[[1]])[idx_na[[1]]])^2))
+## sqrt(mean((actual - predicted)^2))
+
+rmse_5th = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_5percentile[[i]])[idx_na[[i]]]
+  rmse_5th[i] <- sqrt(mean((actual - predicted)^2))
+}
+
+rmse_LCMD = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_lcmd[[i]])[idx_na[[i]]]
+  rmse_LCMD[i] <- sqrt(mean((actual - predicted)^2))
+}
+
+rmse_knn = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_knn[[i]])[idx_na[[i]]]
+  rmse_knn[i] <- sqrt(mean((actual - predicted)^2))
+}
+
+rmse_rf = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_rf[[i]][1])[idx_na[[i]]]
+  rmse_rf[i] <- sqrt(mean((actual - predicted)^2))
+}
+
+rmse_ppca = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_ppca[[i]])[idx_na[[i]]]
+  rmse_ppca[i] <- sqrt(mean((actual - predicted)^2))
+}
+
+rmse_med = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_med[[i]])[idx_na[[i]]]
+  rmse_med[i] <- sqrt(mean((actual - predicted)^2))
+}
+
+rmse_mean = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_mean[[i]])[idx_na[[i]]]
+  rmse_mean[i] <- sqrt(mean((actual - predicted)^2))
+}
+
+## r2: not reflective of the prediction accuracy but can indicate the correlation between actual and pred
+r2_5th = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_5percentile[[i]])[idx_na[[i]]]
+  r2_5th[i] <- cor.test(actual, predicted, method = 'pearson')$estimate
+}
+
+r2_LCMD = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_lcmd[[i]])[idx_na[[i]]]
+  r2_LCMD[i] <- cor.test(actual, predicted, method = 'pearson')$estimate
+}
+
+r2_knn = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_knn[[i]])[idx_na[[i]]]
+  r2_knn[i] <- cor.test(actual, predicted, method = 'pearson')$estimate
+}
+
+r2_rf = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_rf[[i]][1])[idx_na[[i]]]
+  r2_rf[i] <- cor.test(actual, predicted, method = 'pearson')$estimate
+}
+
+r2_ppca = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_ppca[[i]])[idx_na[[i]]]
+  r2_ppca[i] <- cor.test(actual, predicted, method = 'pearson')$estimate
+}
+
+r2_med = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_med[[i]])[idx_na[[i]]]
+  r2_med[i] <- cor.test(actual, predicted, method = 'pearson')$estimate
+}
+
+r2_mean = vector(length = 10-1)
+for(i in 1:10){
+  actual = unlist(data_complete)[idx_na[[i]]]
+  predicted = unlist(data_list_imputed_mean[[i]])[idx_na[[i]]]
+  r2_mean[i] <- cor.test(actual, predicted, method = 'pearson')$estimate
+}
+```
+
+```{r imputation-method}
+# imputation accuracy ====
+## rmse
+imputation_rmse <- data.frame(cbind("Percent missing" = c(5, 10, 20, 30, 40, 50, 60, 70, 80, 90),
+                                    rmse_5th, rmse_LCMD, rmse_knn, rmse_rf, rmse_ppca, rmse_med, rmse_mean))
+colnames(imputation_rmse)[2:8] <- c('5th', 'LCMD', 'KNN', 'RF', 'PPCA', 'Median', 'Mean')
+imputation_rmse <- tidyr::gather(imputation_rmse, key = "variable", value = "value", -Percent.missing)
+
+## r2
+imputation_r2 <- data.frame(cbind("Percent missing" = c(5, 10, 20, 30, 40, 50, 60, 70, 80, 90),
+                                  r2_5th, r2_LCMD, r2_knn, r2_rf, r2_ppca, r2_med, r2_mean))
+colnames(imputation_r2)[2:8] <- c('5th', 'LCMD', 'KNN', 'RF', 'PPCA', 'Median', 'Mean')
+imputation_r2 <- tidyr::gather(imputation_r2, key = "variable", value = "value", -Percent.missing)
+
+# identify best method at different thresholds ====
+imputation_method_rmse <- imputation_rmse %>%
+  dplyr::group_by(Percent.missing) %>%
+  dplyr::filter(complete.cases(value) & value == min(value, na.rm = TRUE)) %>%
+  dplyr::ungroup()
+imputation_method_rmse$test <- "rmse"
+
+imputation_method_r2 <- imputation_r2 %>%
+  dplyr::group_by(Percent.missing) %>%
+  dplyr::filter(complete.cases(value) & value == min(value, na.rm = TRUE)) %>%
+  dplyr::ungroup()
+imputation_method_r2$test <- "rmr2se"
+
+imputation_method <- rbind(imputation_method_r2, imputation_method_rmse)
+imputation_method_pick <- names(sort(table(imputation_method$variable), decreasing = TRUE)[1])
+```
+
+Imputation tests performed: (1) 1/5th of lowest detected value (5th), (2) left censored missing data (lcmd), (3) K-nearest neighbours (KNN; does not work with >50% missingness), (4) probabilistic PCA (PPCA; does not work with complete sample missingness), (5) median, (6) mean, and (7) random forest (RF). We compare the actual feature value with the imputed value using root-mean-square error (RMSE) and R^2^. RMSE is calculated as: $\sqrt{\text{mean}\left((\text{actual} - \text{predicted})^2\right)}$. Where $actual$ is the value from the complete data prior to replacement and $predicted$ is the imputed value of said missing data. NOTE: R^2^ is not reflective of prediction accuracy but can indicate the correlation between the actual and imputed values. 
+
+The figure below gives values for all models at all % missing and the table shows the most accurate model for each % missing tested; the lower the RMSE the better the model fit; the higher the R^2^ the more correlated the actual and imputed values are. Based on these tests, overall `r imputation_method_pick` performs best.
+
+```{r plot-imputation-comparison, fig.cap='comparison between imputed and actual values', out.width="100%"}
+## plot
+custom_breaks <- c(0.5, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90)
+custom_labels <- custom_breaks
+
+plot_imputation_rmse <- ggplot(imputation_rmse, aes(x = Percent.missing, y = value, col = variable)) +
+  geom_line(aes(col = variable), linewidth = 1.5) + 
+  geom_point(aes(col = variable), size = 3) +  
+  guides(color = guide_legend("method")) +
+  ylab("RMSE") + xlab("% missing") + 
+  theme_cowplot() +
+  scale_x_continuous(breaks = custom_breaks, labels = custom_labels) +
+  theme(axis.text = element_text(size = 10))
+
+plot_imputation_r2 <- ggplot(imputation_r2, aes(x = Percent.missing, y = value, col = variable)) +
+  geom_line(aes(col = variable), linewidth = 1.5) + 
+  geom_point(aes(col = variable), size = 3) +  
+  guides(color = guide_legend("method")) +
+  ylab("R2") + xlab("% missing") +
+  theme_cowplot() +
+  scale_x_continuous(breaks = custom_breaks, labels = custom_labels) +
+  theme(axis.text = element_text(size = 10))
+
+# layout plots
+plot_imputation_comparison <- plot_imputation_rmse + plot_imputation_r2 + plot_layout(guides = 'collect')
+plot_imputation_comparison
+```
+
+```{r table-imputation-accuracy}
+table <- left_join(imputation_method_rmse, imputation_method_r2, by = "Percent.missing")
+table <- select(table, Percent.missing, variable.x, value.x, variable.y, value.y)
+kbl(table, caption = "Imputation method accuracy", col.names = c("% missing", "RMSE method", "RMSE value", "R2 metho", "R2 value")) %>%
+  kable_styling(full_width = F, bootstrap_options = c("striped", "hover", "condensed", "responsive"))
+```

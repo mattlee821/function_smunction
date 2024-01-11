@@ -26,10 +26,14 @@ Imports:
     TwoSampleMR,
     data.table,
     genetics.binaRies,
-    gwasvcf
+    gwasvcf,
+    rmarkdown,
+    here
 Remotes:
     NightingaleHealth/ggforestplot,
     MRCIEU/genetics.binaRies,
     MRCIEU/gwasvcf,
     MRCIEU/TwoSampleMR,
     MRCIEU/ieugwasr
+Files:
+    inst/doc/imputation-test.qmd
