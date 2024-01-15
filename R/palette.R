@@ -1,6 +1,7 @@
 # script to make colour palette
-#' @title make colour palette
-#' @description assign palette to use palette_discrete <- palette()
+#' @title make colour palettes
+#' @description assign palette to use palettes <- palette()
+#' @returns returns a list of three colour palettes: 2 discrete and 1 continous
 #'
 palette <- function() {
   palette_discrete1 <- wesanderson::wes_palette(name = "Royal1")
