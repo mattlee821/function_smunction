@@ -8,7 +8,14 @@ palette <- function() {
   palette_continuous <- structure(.Data = grDevices::colorRampPalette(c(wesanderson::wes_palette(name = "Royal1")[1],
                                                                         wesanderson::wes_palette(name = "Royal1")[2]))(100),
                                   class = "palette", name = "Royal1 continuous")
-  return(palette_discrete1)
-  return(palette_discrete2)
-  return(palette_continuous)
+  # create a list to store all palettes
+  palettes <- list(
+    discrete1 = palette_discrete1,
+    discrete2 = palette_discrete2,
+    continuous = palette_continuous
+  )
+
+  # return list
+  return(all_palettes)
+
 }
