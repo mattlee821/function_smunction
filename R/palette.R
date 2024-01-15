@@ -16,6 +16,6 @@ palette <- function() {
   )
 
   # return list
-  return(all_palettes)
+  return(palettes)
 
 }
