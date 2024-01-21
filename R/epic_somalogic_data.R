@@ -64,8 +64,8 @@ epic_somalogic_create_subtypes <- function(data) {
 #' @export
 epic_somalogic_create_sex_specific_dataframes <- function(data_group, ID_col) {
   # Create sex-combined and sex-specific dataframes for a given 'ID_col' group
-  sex_combined <- data_group
-  sex_combined$ID <- paste0(data_group[[ID_col]][1], ";combined")
+  combined <- data_group
+  combined$ID <- paste0(data_group[[ID_col]][1], ";combined")
 
   male <- data_group[data_group$sex == 2, ]
   male$ID <- paste0(data_group[[ID_col]][1], ";male")
@@ -74,7 +74,7 @@ epic_somalogic_create_sex_specific_dataframes <- function(data_group, ID_col) {
   female$ID <- paste0(data_group[[ID_col]][1], ";female")
 
   return(list(
-    sex_combined = sex_combined,
+    combined = combined,
     male = male,
     female = female
   ))
