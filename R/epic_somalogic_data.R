@@ -30,7 +30,7 @@ epic_somalogic_create_subtypes <- function(data) {
   data_rectum <- droplevels(data_rectum)
 
   # Subset for subtypes - Early Onset
-  data_cancer_eo <- subset(data, ageevent < 55)
+  data_cancer_eo <- subset(data_cancer, ageevent < 55)
   data_control_eo <- subset(data_control, age < 55)
   data_control_eo <- data_control_eo %>%
     mutate(age_exit_cancer_1st = ifelse(age_exit_cancer_1st > 55, 55, age_exit_cancer_1st))
