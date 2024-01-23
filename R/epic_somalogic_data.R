@@ -126,3 +126,82 @@ epic_somalogic_create_subtype_dataframes <- function(data, ID_col) {
 
   return(list_data)
 }
+
+#' Process exclusions from epic_somalogic_create_subtype_dataframes
+#'
+#' This function takes a nested list of data frames and a nested list of exclusions, and applies
+#' the exclusion logic to remove specified rows (samples) and columns (features) from the data frames.
+#'
+#' @param list_data A list of data frames.
+#' @param exclusions A list of exclusion criteria for each data frame.
+#' @return The modified list_data after applying exclusions.
+#'
+#' @export
+epic_somalogic_exclusions <- function(list_data, exclusions) {
+# Iterate over the main list
+for (i in seq_along(list_data)) {
+  # Get the name of the current list
+  current_list_name <- names(list_data)[i]
+
+  # Check if the current list is in the exclusions list
+  if (current_list_name %in% names(exclusions)) {
+    # Iterate over the sublists in exclusions
+    for (j in seq_along(exclusions[[current_list_name]])) {
+      # Get the name of the current sublist
+      current_sublist_name <- names(exclusions[[current_list_name]])[j]
+
+      # Iterate over the data frames in list_data
+      for (k in seq_along(list_data[[i]])) {
+        # Get the name of the current data frame
+        current_df_name <- names(list_data[[i]])[k]
+
+        # Check if the current data frame is in the exclusion sublist
+        if (current_df_name %in% current_sublist_name) {
+          # Convert to data.table
+          dt <- as.data.table(list_data[[i]][[k]])
+
+          # 1. Print the name of the dataframe
+          cat("# Processing:", current_list_name, "/", current_sublist_name, "/", "\n")
+
+          # 2. Print the number of rows and columns containing "seq"
+          num_rows_before <- nrow(dt)
+          num_cols_seq_before <- sum(grepl("^seq", colnames(dt)))
+          cat("## Number of samples before:", num_rows_before, "\n")
+          cat("## Number of features before:", num_cols_seq_before, "\n")
+
+          # Get the exclusion vectors
+          id_samples_exclude <- exclusions[[current_list_name]][[current_sublist_name]]$id_samples_exclude
+          id_features_exclude <- exclusions[[current_list_name]][[current_sublist_name]]$id_features_exclude
+
+          # 3. Print the number of rows to exclude and the values of "id_samples_exclude"
+          num_rows_to_exclude <- sum(dt$idepic %in% id_samples_exclude)
+          cat("## Number of samples to exclude:", num_rows_to_exclude, "\n")
+          cat("## samples to exclude:", paste(id_samples_exclude, collapse = ", "), "\n")
+
+          # 4. Print the number of columns to exclude and the values of "id_features_exclude"
+          num_cols_to_exclude <- sum(colnames(dt) %in% id_features_exclude)
+          cat("## Number of features to exclude:", num_cols_to_exclude, "\n")
+          cat("## features to exclude:", paste(id_features_exclude, collapse = ", "), "\n")
+
+          # Identify rows to keep
+          rows_to_keep <- !(dt$idepic %in% id_samples_exclude)
+
+          # Identify columns to keep
+          cols_to_keep <- !(colnames(dt) %in% id_features_exclude)
+
+          # Remove specified rows and columns from the data frame
+          list_data[[i]][[k]] <- dt[rows_to_keep, ..cols_to_keep, with = FALSE]
+
+          # 5. Print the number of rows and the number of columns containing "seq" after making the exclusions
+          num_rows_after <- nrow(list_data[[i]][[k]])
+          num_cols_seq_after <- sum(grepl("^seq", colnames(list_data[[i]][[k]])))
+          cat("## Number of samples after:", num_rows_after, "\n")
+          cat("## Number of features after:", num_cols_seq_after, "\n")
+        }
+      }
+    }
+  }
+}
+
+return(list_data)
+}
