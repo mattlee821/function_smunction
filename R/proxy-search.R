@@ -30,6 +30,10 @@ proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_re
 
   # exposure snps missing from outcome ====
   snps_missing <- setdiff(unique(as.factor(data_exposure$SNP)), unique(as.factor(data_outcome$SNP)))
+  if (length(snps_missing) == 0) {
+    message("No missing SNPs. Returning the original dataframe.")
+    return(data_outcome)
+  }
 
   # look-up missing SNPs in reference panel ====
   message(paste0("# 1. looking up ", length(unique(as.factor(snps_missing))), " missing-SNP(s) in the reference panel"))
