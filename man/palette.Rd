@@ -2,10 +2,13 @@
 % Please edit documentation in R/palette.R
 \name{palette}
 \alias{palette}
-\title{make colour palette}
+\title{make colour palettes}
 \usage{
 palette()
 }
+\value{
+returns a list of three colour palettes: 2 discrete and 1 continous
+}
 \description{
-assign palette to use palette_discrete <- palette()
+assign palette to use palettes <- palette()
 }
