@@ -23,9 +23,9 @@ be no extra columns.
 }
 \examples{
 \dontrun{
-imputation_test(rmd_location = "rmd/imputation-test.Rmd",
-                file_path = "project1/data/",
-                data_var = "mtcars")
+imputation_test(data = mtcars,
+                output_dir = "project1/data/",
+                subtitle = "imputation testing for mtcars")
 }
 
 }

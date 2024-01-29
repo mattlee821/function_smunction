@@ -26,9 +26,9 @@ be no extra columns. This function is for testing.
 \examples{
 \dontrun{
 imputation_test_package(rmd_location = "rmd/imputation_test.qmd",
-                       data = data,
-                       output_dir = "/Users/leem/Downloads/",
-                       subtitle = "test")
+                        data = mtcars,
+                        output_dir = "project1/data/",
+                        subtitle = "imputation testing for mtcars")
 }
 
 }
