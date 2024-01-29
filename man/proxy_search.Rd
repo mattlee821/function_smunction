@@ -12,7 +12,20 @@ proxy_search(
   data_reference_path,
   tag_r2 = 0.8,
   tag_kb = 5000,
-  tag_nsnp = 5000
+  tag_nsnp = 5000,
+  outcome_sep,
+  outcome_phenotype,
+  outcome_SNP,
+  outcome_BETA,
+  outcome_SE,
+  outcome_P,
+  outcome_EA,
+  outcome_OA,
+  outcome_EAF,
+  outcome_N,
+  outcome_ID,
+  outcome_CHR,
+  outcome_POS
 )
 }
 \arguments{
@@ -31,6 +44,32 @@ proxy_search(
 \item{tag_kb}{window to look for proxy SNPs; from \code{get_ld_proxies()}; default = 5000}
 
 \item{tag_nsnp}{from \code{get_ld_proxies()}; default = 5000}
+
+\item{outcome_sep}{separator for your outcome GWAS}
+
+\item{outcome_phenotype}{phenotype column name of your GWAS}
+
+\item{outcome_SNP}{SNP column name of your GWAS}
+
+\item{outcome_BETA}{BETA column name of your GWAS}
+
+\item{outcome_SE}{SE column name of your GWAS}
+
+\item{outcome_P}{P column name of your GWAS}
+
+\item{outcome_EA}{EA column name of your GWAS}
+
+\item{outcome_OA}{OA column name of your GWAS}
+
+\item{outcome_EAF}{EAF column name of your GWAS}
+
+\item{outcome_N}{N column name of your GWAS}
+
+\item{outcome_ID}{ID column name of your GWAS}
+
+\item{outcome_CHR}{CHR column name of your GWAS}
+
+\item{outcome_POS}{POS column name of your GWAS}
 }
 \value{
 a data frame
