@@ -16,8 +16,23 @@
 #' @param tag_r2 r2 for proxy SNP; from `get_ld_proxies()`; default = 0.8
 #' @param tag_kb window to look for proxy SNPs; from `get_ld_proxies()`; default = 5000
 #' @param tag_nsnp from `get_ld_proxies()`; default = 5000
+#' @param outcome_sep separator for your outcome GWAS
+#' @param outcome_phenotype phenotype column name of your GWAS
+#' @param outcome_SNP SNP column name of your GWAS
+#' @param outcome_BETA BETA column name of your GWAS
+#' @param outcome_SE SE column name of your GWAS
+#' @param outcome_P P column name of your GWAS
+#' @param outcome_EA EA column name of your GWAS
+#' @param outcome_OA OA column name of your GWAS
+#' @param outcome_EAF EAF column name of your GWAS
+#' @param outcome_N N column name of your GWAS
+#' @param outcome_ID ID column name of your GWAS
+#' @param outcome_CHR CHR column name of your GWAS
+#' @param outcome_POS POS column name of your GWAS
 proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_reference, data_reference_path,
-                         tag_r2 = 0.8, tag_kb = 5000, tag_nsnp = 5000) {
+                         tag_r2 = 0.8, tag_kb = 5000, tag_nsnp = 5000,
+                         outcome_sep, outcome_phenotype, outcome_SNP, outcome_BETA, outcome_SE, outcome_P,
+                         outcome_EA, outcome_OA, outcome_EAF, outcome_N, outcome_ID, outcome_CHR, outcome_POS) {
 
   # Parameter Validation
   if (!file.exists(data_outcome_path) || !file.exists(paste0(data_reference))) {
@@ -60,14 +75,14 @@ proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_re
   ## format proxy data: change column order and names, add proxy.outcome = TRUE
   proxies <- proxies %>%
     dplyr::select(target_snp.outcome = SNP_A,
-           proxy_snp.outcome = SNP_B,
-           target_a1.outcome = A1,
-           target_a2.outcome = A2,
-           proxy_a1.outcome = B1,
-           proxy_a2.outcome = B2,
-           R) %>%
+                  proxy_snp.outcome = SNP_B,
+                  target_a1.outcome = A1,
+                  target_a2.outcome = A2,
+                  proxy_a1.outcome = B1,
+                  proxy_a2.outcome = B2,
+                  R) %>%
     dplyr::mutate(proxy.outcome = TRUE,
-           SNP = proxy_snp.outcome) %>%
+                  SNP = proxy_snp.outcome) %>%
     dplyr::select(proxy.outcome, everything())
   message(paste0("## proxy-SNP(s) for ", length(unique(proxies$target_snp.outcome)), " missing-SNP(s) found; ", "proxy-SNP(s) for ", length(unique(as.factor(snps_reference))) - length(unique(as.factor(proxies$target_snp.outcome))), " missing-SNP(s) not available (e.g., no proxy-SNP or r2 < provided)"))
 
@@ -78,19 +93,19 @@ proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_re
     dplyr::pull(proxy_snp.outcome)
   data_outcome_proxies <- TwoSampleMR::read_outcome_data(filename = data_outcome_path,
                                                          snps = proxy_snps,
-                                                         sep = "\t",
-                                                         phenotype_col = "phenotype",
-                                                         snp_col = "SNP",
-                                                         beta_col = "BETA",
-                                                         se_col = "SE",
-                                                         eaf_col = "EAF",
-                                                         effect_allele_col = "EA",
-                                                         other_allele_col = "OA",
-                                                         pval_col = "P",
-                                                         samplesize_col = "N",
-                                                         id_col = "phenotype",
-                                                         chr_col = "CHR",
-                                                         pos_col = "POS")
+                                                         sep = outcome_sep,
+                                                         phenotype_col = outcome_phenotype,
+                                                         snp_col = outcome_snp,
+                                                         beta_col = outcome_BETA,
+                                                         se_col = outcome_SE,
+                                                         eaf_col = outcome_EAF,
+                                                         effect_allele_col = outcome_EA,
+                                                         other_allele_col = outcome_OA,
+                                                         pval_col = outcome_P,
+                                                         samplesize_col = outcome_N,
+                                                         id_col = outcome_ID,
+                                                         chr_col = outcome_CHR,
+                                                         pos_col = outcome_POS)
   data_outcome_proxies <- dplyr::left_join(data_outcome_proxies, proxies, by = c("SNP" = "SNP"))
   message(paste0("## proxy-SNP(s) for ", length(unique(as.factor(data_outcome_proxies$target_snp.outcome))), " of ", length(unique(as.factor(proxies$target_snp.outcome))), " missing-SNP(s) extracted"))
 
