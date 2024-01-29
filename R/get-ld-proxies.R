@@ -14,7 +14,6 @@
 #'
 #' @export
 #' @return data frame
-#'
 get_ld_proxies <- function(rsid, bfile, searchspace=NULL, tag_kb=5000, tag_nsnp=5000, tag_r2=0.6, threads=1, out=tempfile())
 {
   stopifnot(check_plink())
