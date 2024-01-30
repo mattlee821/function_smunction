@@ -206,6 +206,122 @@ for (i in seq_along(list_data)) {
 return(list_data)
 }
 
+#' `epic_somalogic_prentic_weighting()`: Prentice weighting function for EPIC somalogic analysis
+#' @description
+#' This function applies Prentice weighting to the provided data based on follow-up years.
+#' It filters out cases where the age at event is less than the age plus follow-up years,
+#' and then creates different subsets of the data based on disease status and cohort membership.
+#'
+#' @param data A data frame containing the EPIC somalogic data
+#' @param followup_years The number of follow-up years used for weighting
+#' @return A processed data frame with Prentice weighting applied
+epic_somalogic_prentic_weighting <- function(data, followup_years) {
+  data <- data %>% filter(ageevent > age + followup_years) %>% mutate(age = age + followup_years)
+  cat("* N samples before Prentice weighting (follow-up:", followup_years, "years):", nrow(data), "\n")
+  CasesOutsideSubCohort <- data %>% filter(cvd_t2d_coh == 0 & indevent == 1) %>% mutate(age = ageevent-1e-4)
+  CasesInSubcohort_Ctrls <- data %>% filter(cvd_t2d_coh == 1 & indevent == 1) %>% mutate(ageevent = ageevent-1e-4, indevent = 0)
+  CasesInSubcohort_Cases <- data %>% filter(cvd_t2d_coh == 1 & indevent == 1) %>% mutate(age = ageevent-1e-4, cvd_t2d_coh = 0)
+  ControlsSubcohort <- data %>% filter(cvd_t2d_coh == 1 & indevent == 0)
+  cat("* N samples after Prentice weighting (follow-up:", followup_years, "years):", nrow(bind_rows(CasesOutsideSubCohort, CasesInSubcohort_Ctrls, CasesInSubcohort_Cases, ControlsSubcohort)), "\n")
+  bind_rows(CasesOutsideSubCohort, CasesInSubcohort_Ctrls, CasesInSubcohort_Cases, ControlsSubcohort)
+}
+
+#' `epic_somalogic_process_data_complete()`: process missing values in EPIC somalogic data
+#' @description
+#' This function converts missing values in EPIC somalogic data to -9 and
+#' calculates the percentage of missing values for each variable.
+#'
+#' @param df_complete A complete data frame containing EPIC somalogic data
+#' @param followup_years The number of follow-up years for the analysis
+#' @return A processed data frame with missing values replaced by -9
+epic_somalogic_process_data_complete <- function(df_complete, followup_years) {
+  cat("## Converting missing values for data_analysis to -9 (follow-up:", followup_years, "years)", "\n")
+  df_complete$bmi_missing <- ifelse(is.na(df_complete$bmi_adj), 1, 0)
+  df_complete$bmi_adj[is.na(df_complete$bmi_adj)] <- -9
+  cat("* bmi_adj:", round(table(df_complete$bmi_missing)[2] / nrow(df_complete) * 100, 2), "% missing", "\n")
+  df_complete$alc_re_missing <- ifelse(is.na(df_complete$alc_re), 1, 0)
+  df_complete$alc_re[is.na(df_complete$alc_re)] <- -9
+  cat("* alc_re:", round(table(df_complete$alc_re_missing)[2] / nrow(df_complete) * 100, 2), "% missing", "\n")
+  df_complete$pa_mets_missing <- ifelse(is.na(df_complete$pa_mets), 1, 0)
+  df_complete$pa_mets[is.na(df_complete$pa_mets)] <- -9
+  cat("* pa_mets:", round(table(df_complete$pa_mets_missing)[2] / nrow(df_complete) * 100, 2), "% missing", "\n")
+  df_complete$QE_ENERGY_missing <- ifelse(is.na(df_complete$QE_ENERGY), 1, 0)
+  df_complete$QE_ENERGY[is.na(df_complete$QE_ENERGY)] <- -9
+  cat("* QE_ENERGY:", round(table(df_complete$QE_ENERGY_missing)[2] / nrow(df_complete) * 100, 2), "% missing", "\n")
+  df_complete$QGE0701_missing <- ifelse(is.na(df_complete$QGE0701), 1, 0)
+  df_complete$QGE0701[is.na(df_complete$QGE0701)] <- -9
+  cat("* QGE0701:", round(table(df_complete$QGE0701_missing)[2] / nrow(df_complete) * 100, 2), "% missing", "\n")
+  df_complete$QGE0704_missing <- ifelse(is.na(df_complete$QGE0704), 1, 0)
+  df_complete$QGE0704[is.na(df_complete$QGE0704)] <- -9
+  cat("* QGE0704:", round(table(df_complete$QGE0704_missing)[2] / nrow(df_complete) * 100, 2), "% missing", "\n")
+  return(df_complete)
+}
+
+#' `epic_somalogic_process_data()`: process EPIC somalogic data for analysis
+#' @description
+#' This function preprocesses EPIC somalogic data for analysis by applying
+#' Prentice weighting using `epic_somalogic_process_data()` and converting
+#' missing values to -9 using `epic_somalogic_process_data_complete()`. This
+#' creates two data frames within your nested lists, `data_raw` and `data_complete.`
+#' `data_raw` is the raw data, while `data_complete` has -9 values for NA
+#'
+#' @param list_df A nested list containing EPIC somalogic data frames
+#' @return A processed nested list of EPIC somalogic data frames for analysis
+epic_somalogic_process_data <- function(list_df) {
+  list_processed <- list()  # Initialize the list to store processed data
+  # Loop through each nested list in the main list
+  for (i in seq_along(list_df)) {
+    df_name <- names(list_df)[i]  # Get the name of the nested list
+
+    cat("# Processing nested list:", df_name, "\n")
+
+    nested_list <- list_df[[i]]
+    processed_nested_list <- list()  # Initialize a nested list to store processed dataframes
+
+    # process data =====
+    for (j in seq_along(nested_list)) {
+      df <- nested_list[[j]]
+      df_name_nested <- names(nested_list)[j]  # Get the name of the dataframe
+
+      #
+      cat("## Processing dataframe:", df_name_nested, "\n")
+      df$followup <- df$age_exit_cancer_1st - df$age
+      df <- df %>%  mutate(cvd_t2d_coh = ifelse(cvd_t2d_coh == "No", 0, 1))
+      df <- df %>%
+        mutate(age_group = as.integer(factor(cut(age,
+                                                 breaks = seq(0, max(age) + 5, by = 5),
+                                                 right = FALSE,
+                                                 labels = seq(0, max(age), by = 5)))))  # Update labels
+      df$smoke_stat <- factor(df$smoke_stat, levels = c("Never", "Former", "Smoker"))
+      df$pa_index <- factor(df$pa_index, levels = c("Inactive", "Moderately inactive", "Moderately active", "Active", "Missing"))
+      df$l_school <- factor(df$l_school, levels = c("None", "Primary school completed", "Secondary school", "Technical/professional school", "Longer education (incl. University deg.)", "Not specified"))
+
+      # prentice weighting ====
+      data_analysis <- epic_somalogic_prentic_weighting(df, 0)
+      data_analysis_excl2year <- epic_somalogic_prentic_weighting(df, 2)
+      data_analysis_excl5year <- epic_somalogic_prentic_weighting(df, 5)
+
+      # make list: processed data ====
+      processed_df <- list(
+        data_analysis = list(data_raw = df,
+                             data_complete = epic_somalogic_process_data_complete(data_analysis, 0)),
+        data_analysis_excl2year = list(data_raw = data_analysis_excl2year,
+                                       data_complete = epic_somalogic_process_data_complete(data_analysis_excl2year, 2)),
+        data_analysis_excl5year = list(data_raw = data_analysis_excl5year,
+                                       data_complete = epic_somalogic_process_data_complete(data_analysis_excl5year, 5))
+      )
+
+      processed_nested_list[[df_name_nested]] <- processed_df
+    }
+
+    # Store the processed nested list in the main processed list with its name
+    list_processed[[df_name]] <- processed_nested_list
+  }
+
+  # Return the processed data list
+  list_processed
+}
+
 #' `epic_somalogic_models()`: a list of coxph models
 #' @description
 #' This function defines three Cox proportional hazards models including
