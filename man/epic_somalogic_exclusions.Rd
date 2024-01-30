@@ -2,14 +2,14 @@
 % Please edit documentation in R/epic_somalogic_data.R
 \name{epic_somalogic_exclusions}
 \alias{epic_somalogic_exclusions}
-\title{Process exclusions from epic_somalogic_create_subtype_dataframes}
+\title{\code{epic_somalogic_exclusions()}: process exclusions from \code{epic_somalogic_create_subtype_dataframes()}}
 \usage{
 epic_somalogic_exclusions(list_data, exclusions)
 }
 \arguments{
 \item{list_data}{A list of data frames.}
 
-\item{exclusions}{A list of exclusion criteria for each data frame.}
+\item{exclusions}{A list of exclusions for each data frame.}
 }
 \value{
 The modified list_data after applying exclusions.

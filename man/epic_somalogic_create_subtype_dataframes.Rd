@@ -2,7 +2,7 @@
 % Please edit documentation in R/epic_somalogic_data.R
 \name{epic_somalogic_create_subtype_dataframes}
 \alias{epic_somalogic_create_subtype_dataframes}
-\title{Create a list of dataframes with sex-specific and subtype data for Epic SomaLogic data.}
+\title{\code{epic_somalogic_create_subtype_dataframes()}: create sex-specific and subtype data for Epic SomaLogic data.}
 \usage{
 epic_somalogic_create_subtype_dataframes(data, ID_col)
 }

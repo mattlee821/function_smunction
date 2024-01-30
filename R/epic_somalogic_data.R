@@ -1,4 +1,4 @@
-#'  Create a list of dataframes with sex-specific and subtype data for Epic SomaLogic data.
+#'  `epic_somalogic_create_subtypes()`: Create a list of dataframes with sex-specific and subtype data for Epic SomaLogic data.
 #' @description
 #' This function is a master function for 'epic_somalogic_create_sex_specific_dataframes()'
 #' and 'epic_somalogic_create_subtypes()'. It takes a dataframe, splits it by
@@ -52,7 +52,7 @@ epic_somalogic_create_subtypes <- function(data) {
   ))
 }
 
-#' Create sex-specific dataframes for a given 'ID_col' group for Epic SomaLogic data
+#' `epic_somalogic_create_sex_specific_dataframes()`: create sex-specific dataframes for a given 'ID_col' group for Epic SomaLogic data
 #' @description
 #' This function takes a subset of data for a specific 'ID_col' group and creates
 #' sex-specific dataframes - sex-combined, male, and female.
@@ -80,7 +80,7 @@ epic_somalogic_create_sex_specific_dataframes <- function(data_group, ID_col) {
   ))
 }
 
-#'  Create a list of dataframes with sex-specific and subtype data for Epic SomaLogic data.
+#'  `epic_somalogic_create_subtype_dataframes()`: create sex-specific and subtype data for Epic SomaLogic data.
 #' @description
 #' This function is a master function for 'epic_somalogic_create_sex_specific_dataframes()'
 #' and 'epic_somalogic_create_subtypes()'. It takes a dataframe, splits it by
@@ -127,13 +127,13 @@ epic_somalogic_create_subtype_dataframes <- function(data, ID_col) {
   return(list_data)
 }
 
-#' Process exclusions from epic_somalogic_create_subtype_dataframes
-#'
+#' `epic_somalogic_exclusions()`: process exclusions from `epic_somalogic_create_subtype_dataframes()`
+#' @description
 #' This function takes a nested list of data frames and a nested list of exclusions, and applies
 #' the exclusion logic to remove specified rows (samples) and columns (features) from the data frames.
 #'
 #' @param list_data A list of data frames.
-#' @param exclusions A list of exclusion criteria for each data frame.
+#' @param exclusions A list of exclusions for each data frame.
 #' @return The modified list_data after applying exclusions.
 #'
 #' @export

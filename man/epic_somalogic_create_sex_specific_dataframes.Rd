@@ -2,7 +2,7 @@
 % Please edit documentation in R/epic_somalogic_data.R
 \name{epic_somalogic_create_sex_specific_dataframes}
 \alias{epic_somalogic_create_sex_specific_dataframes}
-\title{Create sex-specific dataframes for a given 'ID_col' group for Epic SomaLogic data}
+\title{\code{epic_somalogic_create_sex_specific_dataframes()}: create sex-specific dataframes for a given 'ID_col' group for Epic SomaLogic data}
 \usage{
 epic_somalogic_create_sex_specific_dataframes(data_group, ID_col)
 }
