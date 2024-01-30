@@ -8,4 +8,7 @@ importFrom(graphics, "abline", "axis", "par", "points")
 
 export("harmonise_data_sex", "mr_sex", "mr_singlesnp_sex", "mr_heterogeneity_sex", "mr_pleiotropy_test_sex", "mr_leaveoneout_sex",
        "mr_density_plot", "mr_leaveoneout_plot", "mr_forest_plot", "mr_scatter_plot", "mr_funnel_plot",
-       "proxy_search")
+       "proxy_search",
+       "epic_somalogic_create_subtypes", "epic_somalogic_create_sex_specific_dataframes", "epic_somalogic_create_subtype_dataframes",
+       "epic_somalogic_exclusions", "epic_somalogic_prentic_weighting", "epic_somalogic_process_data_complete", "epic_somalogic_process_data",
+       "epic_somalogic_models", "epic_somalogic_analysis")
