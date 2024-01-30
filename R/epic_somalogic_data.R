@@ -206,4 +206,171 @@ for (i in seq_along(list_data)) {
 return(list_data)
 }
 
+#' `epic_somalogic_models()`: a list of coxph models
+#' @description
+#' This function defines three Cox proportional hazards models including
+#'
+#' @return A list containing three Cox proportional hazards models
+#'
+epic_somalogic_models <- function() {
+  # Define the list of models
+  models <- list(
+    model_1 = function(df, exposure_var) {
+      coxph(Surv(age, ageevent, cncr_mal_clrt_colon) ~ get(exposure_var) +
+              cluster(idepic),
+            data = df)
+    },
+    model_2 = function(df, exposure_var) {
+      coxph(Surv(age, ageevent, cncr_mal_clrt_colon) ~ get(exposure_var) +
+              strata(sex, center, age_group) +
+              cluster(idepic),
+            data = df)
+    },
+    model_3 = function(df, exposure_var) {
+      coxph(Surv(age, ageevent, cncr_mal_clrt_colon) ~ get(exposure_var) +
+              bmi_adj + alc_re + smoke_stat +
+              strata(sex, center, age_group) +
+              cluster(idepic),
+            data = df)
+    }
+  )
+
+  return(models)
+}
+
+#' `epic_somalogic_analysis()`: Perform analysis on EPIC somalogic data
+#' @description
+#' This function takes a processed list from `epic_somalogic_process_data()` and
+#' performs Cox proportional hazards analysis using predefined models from
+#' `epic_somalogic_models()`. It iterates over each combination of data frames
+#' and exposures, fits the models, and stores the results in a data frame.
+#' It prints the number of unique exposures and data frame combinations for sanity
+#'
+#' @param list_processed A list from `epic_somalogic_process_data()`
+#' @return A data frame containing the results of Cox proportional hazards analysis
+#'
+epic_somalogic_analysis <- function(list_processed) {
+  # Initialize an empty data frame to store results
+  data_result <- data.frame(
+    exposure = character(),
+    data1 = character(),
+    data2 = character(),
+    data3 = character(),
+    data4 = character(),
+    model_type = character(),
+    n = numeric(),
+    nevent = numeric(),
+    coef = numeric(),
+    coef_exp = numeric(),
+    se = numeric(),
+    ci_lower_exp = numeric(),
+    ci_upper_exp = numeric(),
+    se_robust = numeric(),
+    pval = numeric(),
+    degrees_freedom = numeric(),
+    concordance = numeric(),
+    concordance_se = numeric(),
+    likelihood_ratio_test = numeric(),
+    likelihood_ratio_test_pval = numeric(),
+    wald_test = numeric(),
+    wald_test_pval = numeric(),
+    score_test = numeric(),
+    score_test_pval = numeric(),
+    robust_score_test = numeric(),
+    robust_score_test_pval = numeric(),
+    exclusion_missing = numeric()
+  )
+
+  # Define a list of models
+  models <- epic_somalogic_models()
+
+  # Counters for unique values
+  unique_exposures <- vector()
+  unique_data1 <- vector()
+  unique_data2 <- vector()
+  unique_data3 <- vector()
+  unique_data4 <- vector()
+  unique_data5 <- vector()
+
+  # Iterate over each list within list_processed
+  for (i in seq_along(list_processed)) {
+    list1_name <- names(list_processed)[i]
+    cat("Processing list", list1_name, "\n")
+    list_processed_i <- list_processed[[i]]
+
+    for (j in seq_along(list_processed_i)) {
+      list2_name <- names(list_processed_i)[j]
+      cat("  -", list2_name, "\n")
+      list_processed_j <- list_processed_i[[j]]
+
+      for (k in seq_along(list_processed_j)) {
+        list3_name <- names(list_processed_j)[k]
+        cat("  -", list3_name, "\n")
+        list_processed_k <- list_processed_j[[k]]
+
+        for (l in seq_along(list_processed_k)) {
+          data_name <- names(list_processed_k)[l]
+          cat("  -", data_name, "\n")
+          data <- list_processed_k[[l]]
+
+          LABEL <- paste0(list1_name, "_", list2_name, "_", list3_name, "_", data_name)
+
+          for (exposure_var in names(data)[grepl("seq.10000", names(data))]) {
+            for (model_name in names(models)) {
+              cat(paste0("      + running:", model_name, "; exposure:", exposure_var, "; data:", LABEL, "\n"))
+              model_result <- models[[model_name]](data, exposure_var)
+
+              data_result <- rbind(data_result, data.frame(
+                exposure = exposure_var,
+                data1 = list1_name,
+                data2 = list2_name,
+                data3 = list3_name,
+                data4 = data_name,
+                model_type = as.numeric(gsub("model_", "", model_name)),
+                n = model_result$n,
+                nevent = model_result$nevent,
+                coef = summary(model_result)$coef[1, 1],
+                coef_exp = summary(model_result)$conf.int[1, 1],
+                se = summary(model_result)$coef[1, 3],
+                ci_lower_exp = summary(model_result)$conf.int[1, 3],
+                ci_upper_exp = summary(model_result)$conf.int[1, 4],
+                se_robust = summary(model_result)$coef[1, 4],
+                pval = summary(model_result)$coef[1, 6],
+                degrees_freedom = summary(model_result)$logtest[["df"]],
+                concordance = summary(model_result)$concordance[["C"]],
+                concordance_se = summary(model_result)$concordance[["se(C)"]],
+                likelihood_ratio_test = summary(model_result)$logtest[["test"]],
+                likelihood_ratio_test_pval = summary(model_result)$logtest[["pvalue"]],
+                wald_test = summary(model_result)$waldtest[["test"]],
+                wald_test_pval = summary(model_result)$waldtest[["pvalue"]],
+                score_test = summary(model_result)$sctest[["test"]],
+                score_test_pval = summary(model_result)$sctest[["pvalue"]],
+                robust_score_test = summary(model_result)$robscore[["test"]],
+                robust_score_test_pval = summary(model_result)$robscore[["pvalue"]],
+                exclusion_missing = length(model_result$na.action)
+              ))
+
+              # Track unique values
+              unique_exposures <- unique(c(unique_exposures, exposure_var))
+              unique_data1 <- unique(c(unique_data1, list1_name))
+              unique_data2 <- unique(c(unique_data2, list2_name))
+              unique_data3 <- unique(c(unique_data3, list3_name))
+              unique_data4 <- unique(c(unique_data4, data_name))
+            }
+          }
+        }
+      }
+    }
+  }
+  # END: print info
+  cat("# END")
+  cat("## N exposures:", length(unique_exposures), "\n")
+  cat("## N data1:", length(unique_data1), "\n")
+  cat("## N data2:", length(unique_data2), "\n")
+  cat("## N data3:", length(unique_data3), "\n")
+  cat("## N data4:", length(unique_data4), "\n")
+  cat("## N analyses for 1 model:", length(unique_exposures) * length(unique_data1) * length(unique_data2) * length(unique_data3) * length(unique_data4), "\n")
+  # Now data_result contains the desired output
+  return(data_result)
+}
 
