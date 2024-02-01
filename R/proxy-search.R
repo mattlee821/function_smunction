@@ -95,7 +95,7 @@ proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_re
                                                          snps = proxy_snps,
                                                          sep = outcome_sep,
                                                          phenotype_col = outcome_phenotype,
-                                                         snp_col = outcome_snp,
+                                                         snp_col = outcome_SNP,
                                                          beta_col = outcome_BETA,
                                                          se_col = outcome_SE,
                                                          eaf_col = outcome_EAF,
