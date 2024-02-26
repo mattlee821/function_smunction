@@ -11,4 +11,5 @@ export("harmonise_data_sex", "mr_sex", "mr_singlesnp_sex", "mr_heterogeneity_sex
        "proxy_search",
        "epic_somalogic_create_subtypes", "epic_somalogic_create_sex_specific_dataframes", "epic_somalogic_create_subtype_dataframes",
        "epic_somalogic_exclusions", "epic_somalogic_prentic_weighting", "epic_somalogic_process_data_complete", "epic_somalogic_process_data",
-       "epic_somalogic_models", "epic_somalogic_analysis")
+       "epic_somalogic_models", "epic_somalogic_analysis",
+       "format_data")
