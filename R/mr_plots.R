@@ -28,7 +28,7 @@ mr_funnel_plot <- function(singlesnp_results)
                                               "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6",
                                               "#6a3d9a", "#ffff99", "#b15928")) +
       ggplot2::labs(y=expression(1/SE[IV]), x=expression(beta[IV]), colour="MR Method") +
-      ggplot2::ggtitle(paste0("exposure = ", d$id.exposure[1], "; outcome = ", d$id.outcome[1])) +
+      ggplot2::ggtitle(paste0("exposure = ", d$id.exposure[1], "\n outcome = ", d$id.outcome[1])) +
       ggplot2::theme(legend.position="bottom", legend.direction="horizontal")
   })
   res
@@ -72,7 +72,8 @@ mr_scatter_plot <- function (mr_results, dat)
                            ggplot2::geom_errorbarh(ggplot2::aes(xmin = beta.exposure - se.exposure, xmax = beta.exposure + se.exposure), colour = "grey", height = 0) +
                            ggplot2::geom_point(ggplot2::aes(text = paste("SNP:", SNP))) +
                            ggplot2::geom_abline(data = mrres, ggplot2::aes(intercept = a, slope = b, colour = method), show.legend = TRUE) +
-                           ggplot2::labs(colour = "MR Test", x = paste("SNP effect on", d$exposure[1]), y = paste("SNP effect on", d$outcome[1]), title = paste0("exposure = ", d$id.exposure[1], "; outcome =", d$id.outcome[1])) +
+                           ggplot2::labs(colour = "MR Test", x = paste("SNP effect on", d$exposure[1]), y = paste("SNP effect on", d$outcome[1])) +
+                           ggplot2::ggtitle(paste0("exposure = ", d$id.exposure[1], "\n outcome = ", d$id.outcome[1])) +
                            ggplot2::theme(legend.position = "bottom", legend.direction = "horizontal") +
                            ggplot2::guides(colour = ggplot2::guide_legend(nrow = 2))
                        })
@@ -136,7 +137,8 @@ mr_forest_plot <- function(singlesnp_results, exponentiate=FALSE)
         axis.text.y=ggplot2::element_text(size=8),
         axis.ticks.y=ggplot2::element_line(size=0),
         axis.title.x=ggplot2::element_text(size=8)) +
-      ggplot2::labs(y="", x=paste0("MR effect size"), title = paste0("exposure = ", d$id.exposure[1], "; outcome =", d$id.outcome[1]))
+      ggplot2::labs(y="", x=paste0("MR effect size")) +
+      ggplot2::ggtitle(paste0("exposure = ", d$id.exposure[1], "\n outcome = ", d$id.outcome[1]))
   })
   res
 }
@@ -188,7 +190,8 @@ mr_leaveoneout_plot <- function(leaveoneout_results)
         axis.text.y=ggplot2::element_text(size=8),
         axis.ticks.y=ggplot2::element_line(size=0),
         axis.title.x=ggplot2::element_text(size=8)) +
-      ggplot2::labs(y="", x=paste0("MR leave-one-out sensitivity analysis"), title = paste0("exposure = ", d$id.exposure[1], "; outcome =", d$id.outcome[1]))
+      ggplot2::labs(y="", x=paste0("MR leave-one-out sensitivity analysis")) +
+      ggplot2::ggtitle(paste0("exposure = ", d$id.exposure[1], "\n outcome = ", d$id.outcome[1]))
   })
   res
 }
@@ -232,7 +235,8 @@ mr_density_plot <- function(singlesnp_results, mr_results, exponentiate=FALSE, b
       ggplot2::geom_point(y=0, colour="red", ggplot2::aes(size=1/se)) +
       ggplot2::geom_vline(data=mr_results, ggplot2::aes(xintercept=b, colour=method)) +
       ggplot2::scale_colour_brewer(type="qual") +
-      ggplot2::labs(x = paste0("Per SNP MR estimate"), title = paste0("exposure = ", d$id.exposure, "; outcome =", d$id.outcome))
+      ggplot2::labs(x = paste0("Per SNP MR estimate")) +
+      ggplot2::ggtitle(paste0("exposure = ", d$id.exposure[1], "\n outcome = ", d$id.outcome[1]))
   })
   res
 }
