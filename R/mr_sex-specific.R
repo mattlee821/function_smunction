@@ -21,7 +21,7 @@ harmonise_data_sex <- function(data_exposure, data_outcome, harmonise_action){
 
     # Check if data is available for harmonization
     if (nrow(a) > 0 && nrow(b) > 0) {
-      data_harmonise <- harmonise_data(a, b, action = harmonise_action)
+      data_harmonise <- functions::harmonise_data(a, b, action = harmonise_action)
       list_harmonise[[i]] <- data_harmonise
     } else {
       warning(paste("No data for sex =", i, ". Skipping harmonization for this level."))
