@@ -1,3 +1,5 @@
+import(data.table)
+import(dplyr)
 exportPattern("^[[:alpha:]]+")
 importFrom(stats, "as.formula", "lm", "filter", "ppoints", "qbeta", "quantile")
 importFrom(utils, "combn")
@@ -5,6 +7,10 @@ importFrom(rlang, "enquo", ":=", "quo_is_null")
 importFrom(ggplot2, "aes", "guide_legend")
 importFrom(dplyr, "%>%", ".data")
 importFrom(graphics, "abline", "axis", "par", "points")
+importFrom("grDevices", "dev.off", "pdf")
+importFrom("graphics", "layout", "legend", "matplot", "mtext", "rect", "title")
+importFrom("utils", "write.csv")
+importFrom("TwoSampleMR", "harmonise_data")
 
 export("harmonise_data_sex", "mr_sex", "mr_singlesnp_sex", "mr_heterogeneity_sex", "mr_pleiotropy_test_sex", "mr_leaveoneout_sex",
        "mr_density_plot", "mr_leaveoneout_plot", "mr_forest_plot", "mr_scatter_plot", "mr_funnel_plot",
