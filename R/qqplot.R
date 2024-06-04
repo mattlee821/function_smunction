@@ -6,10 +6,8 @@
 #' @param point_colour the colour of the points - defaults to black
 #' @param point_alpha the alpha/transparency of the points - defaults to 0.8
 #' @param title a ggtitle placed top left of the plot
+#' @importFrom stats ppoints qbeta
 #' @export
-#' @import ggplot2
-#' @import cowplot
-
 qqplot <- function(df,
                       ci = 0.95,
                       point_size = 2,
@@ -26,18 +24,18 @@ qqplot <- function(df,
   )
   log10Pe <- expression(paste("Expected -log"[10], plain(P)))
   log10Po <- expression(paste("Observed -log"[10], plain(P)))
-  ggplot(df) +
-    geom_point(aes(expected, observed), alpha = point_alpha, size = point_size, colour = point_colour) +
-    geom_abline(intercept = 0, slope = 1, alpha = 0.5) +
-    geom_line(aes(expected, cupper), linetype = 2) +
-    geom_line(aes(expected, clower), linetype = 2) +
-    ggtitle(title) +
-    xlab(log10Pe) +
-    ylab(log10Po) +
+  ggplot2::ggplot(df) +
+    ggplot2::geom_point(aes(expected, observed), alpha = point_alpha, size = point_size, colour = point_colour) +
+    ggplot2::geom_abline(intercept = 0, slope = 1, alpha = 0.5) +
+    ggplot2::geom_line(aes(expected, cupper), linetype = 2) +
+    ggplot2::geom_line(aes(expected, clower), linetype = 2) +
+    ggplot2::ggtitle(title) +
+    ggplot2::xlab(log10Pe) +
+    ggplot2::ylab(log10Po) +
 
     # Customise the theme:
-    theme_cowplot() +
-    theme(
+    cowplot::theme_cowplot() +
+    ggplot2::theme(
       axis.text.x = element_text(hjust = 0.5,
                                  vjust = 1),
       axis.text.y = element_text(hjust = 1,

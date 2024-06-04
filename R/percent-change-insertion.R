@@ -9,9 +9,7 @@
 #' @note
 #' for (col_name in colnames(data2)) {
 #'   data2 <- calculate_and_insert_percent_change(data1, data2, col_name)}
-
-
-# Create a function to calculate percent change and insert new columns with rounded values
+#' @export
 calculate_and_insert_percent_change <- function(data1, data2, col_name) {
   new_col_name <- paste0(col_name, "_change")
   percent_change <- -((data2[[col_name]] - data1[[col_name]]) / data1[[col_name]]) * 100

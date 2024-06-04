@@ -9,7 +9,6 @@
 #' @param threads Number of threads to use (=1)
 #' @param out temporary output file
 #'
-#' @importFrom magrittr %>%
 #' @importFrom rlang .data
 #'
 #' @export

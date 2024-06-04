@@ -2,27 +2,30 @@
 % Please edit documentation in R/TwoSampleMR_functions.R
 \name{remove_nearby_positions}
 \alias{remove_nearby_positions}
-\title{Remove rows with nearby positions}
+\title{Remove rows with nearby positions (excluding "cis" and "cis-trans_cis")}
 \usage{
 remove_nearby_positions(df)
 }
 \arguments{
-\item{df}{A data frame.}
+\item{df}{A data frame containing chr.exposure, pos.exposure, and cis_trans columns.}
 }
 \value{
-A modified data frame with rows removed based on nearby positions.
-\dontrun{
-for (i in seq_along(list_data_cis_trans)) {
-df <- list_data_cis_trans[\link{i}]
-df <- remove_duplicate_SNP(df)
-df <- remove_nearby_positions(df)
-list_data_cis_trans[\link{i}] <- df
-}
+A modified data frame with rows removed based on nearby positions (excluding "cis" and "cis-trans_cis").
 }
 \description{
-This function removes rows with nearby positions, keeping only the rows with "cis"
-in the "cis_trans" column. It iterates through each row with "cis" in the "cis_trans" column,
-checks if there are other rows with the same value in the "chr.exposure" column,
-and if the positions are within ±500,000. If such rows are found, it removes the rows
-without "cis" in the "cis_trans" column.
+This function removes rows with positions within ±1mb of a "cis" or "cis-trans_cis" row,
+excluding the "cis" or "cis-trans_cis" row itself. It iterates through rows with "cis" or "cis-trans_cis" in "cis_trans",
+checks for other rows with the same chromosome but positions within the threshold.
+If such rows exist and their "cis_trans" is not "cis" or "cis-trans_cis", it removes those rows.
+}
+\details{
+Example usage:
+\code{
+for (i in seq_along(list_data_cis_trans)) {
+  df <- list_data_cis_trans[[i]]
+  df <- remove_duplicate_SNP(df)
+  df <- remove_nearby_positions(df)
+  list_data_cis_trans[[i]] <- df
+}
+}
 }

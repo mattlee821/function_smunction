@@ -13,10 +13,7 @@
 ##' @param row Row number for coloc summary if multiple rows are present. Default is `1`.
 ##' @return List of prior matrix, posterior matrix, and a pass/fail indicator (returned invisibly).
 ##' @export
-##'
-##' @import data.table
-##' @import dplyr
-my_sensitivity <- function(obj, rule = "", trait1_title, trait2_title,
+coloc_sensitivity <- function(obj, rule = "", trait1_title, trait2_title,
                            dataset1 = NULL, dataset2 = NULL,
                            npoints = 100, doplot = TRUE, plot.manhattans = TRUE,
                            preserve.par = FALSE,
@@ -79,28 +76,28 @@ my_sensitivity <- function(obj, rule = "", trait1_title, trait2_title,
       on.exit(par(op))
     }
     if (plot.manhattans) {
-      layout(matrix(1:3, ncol = 1), heights = c(2, 1, 1))
+      graphics::layout(matrix(1:3, ncol = 1), heights = c(2, 1, 1))
       par(mar = c(0.1, 4.1, 4.1, 2.1))
     } else {
-      layout(matrix(1:2, ncol = 1), heights = c(2, 1))
+      graphics::layout(matrix(1:2, ncol = 1), heights = c(2, 1))
     }
-    matplot(log10(testp12), testpp[, paste0("PP.H", H, ".abf")], type = "l",
+    graphics::matplot(log10(testp12), testpp[, paste0("PP.H", H, ".abf")], type = "l",
             col = c("black", "red", "green", "blue", "purple"),
             ylab = "posterior", xlab = "", lwd = 2)
-    mtext(expression(p[12]), 1, line = 2)
-    legend("topright", lwd = 2, col = c("black", "red", "green", "blue", "purple"), legend = paste0("H", H))
+    graphics::mtext(expression(p[12]), 1, line = 2)
+    graphics::legend("topright", lwd = 2, col = c("black", "red", "green", "blue", "purple"), legend = paste0("H", H))
     abline(v = log10(p12), col = "grey")
-    title(main = paste(trait1_title, " and ", trait2_title, sep = ""))
+    graphics::title(main = paste(trait1_title, " and ", trait2_title, sep = ""))
     u <- par('usr')
-    rect(u[1], u[3], log10(testp12)[w[1]], u[4], col = "grey", border = NA)
-    rect(log10(testp12)[w[length(w)]], u[3], u[2], u[4], col = "grey", border = NA)
+    graphics::rect(u[1], u[3], log10(testp12)[w[1]], u[4], col = "grey", border = NA)
+    graphics::rect(log10(testp12)[w[length(w)]], u[3], u[2], u[4], col = "grey", border = NA)
     if (plot.manhattans) {
       par(mar = c(2.1, 4.1, 0.1, 2.1))
       manh.plot(results, wh = 1)
-      title(xlab = "Chromosome position")
+      graphics::title(xlab = "Chromosome position")
       par(mar = c(4.1, 4.1, 0.1, 2.1))
       manh.plot(results, wh = 2)
-      title(xlab = "Chromosome position")
+      graphics::title(xlab = "Chromosome position")
     }
   }
   invisible(list(prior = testH, posterior = testpp, pass = pass))
@@ -115,7 +112,8 @@ my_sensitivity <- function(obj, rule = "", trait1_title, trait2_title,
 ##' @param outcome Outcome trait.
 ##' @param FILE_NAME Name of the file to save results.
 ##' @param window Window size for the analysis.
-perform_colocalization <- function(coloc_data_exposure, coloc_data_outcome, label, outcome, FILE_NAME, window) {
+#' @export
+coloc_perform_colocalization <- function(coloc_data_exposure, coloc_data_outcome, label, outcome, FILE_NAME, window) {
   if (is.character(coloc_data_exposure) && file.exists(coloc_data_exposure)) {
     coloc_data_exposure <- readRDS(coloc_data_exposure)
   }
@@ -130,16 +128,16 @@ perform_colocalization <- function(coloc_data_exposure, coloc_data_outcome, labe
       my.res <- coloc::coloc.abf(dataset1 = coloc_data_exposure, dataset2 = coloc_data_outcome, p1 = 1e-4, p2 = 1e-4, p12 = p12)
       my.res$priors["p12"] <- p12
       my.summary <- coloc.process(my.res)
-      sensitivity.plot <- my_sensitivity(my.res, rule = "H4 > 0.5", trait1_title = label, trait2_title = outcome, plot.manhattans = FALSE, doplot = TRUE)
+      sensitivity.plot <- coloc_sensitivity(my.res, rule = "H4 > 0.5", trait1_title = label, trait2_title = outcome, plot.manhattans = FALSE, doplot = TRUE)
 
       if (!dir.exists("output")) {
         dir.create("output")
       }
 
-      write.csv(my.summary, paste0("output/", FILE_NAME, "_p12_", p12, "_summary.csv"), row.names = FALSE)
-      pdf(paste0("output/", FILE_NAME, "_p12_", p12, "_sensitivity.pdf"))
+      utils::write.csv(my.summary, paste0("output/", FILE_NAME, "_p12_", p12, "_summary.csv"), row.names = FALSE)
+      grDevices::pdf(paste0("output/", FILE_NAME, "_p12_", p12, "_sensitivity.pdf"))
       print(sensitivity.plot)
-      dev.off()
+      grDevices::dev.off()
 
       if (counter == 1) {
         new.df <- my.summary
@@ -151,7 +149,7 @@ perform_colocalization <- function(coloc_data_exposure, coloc_data_outcome, labe
     })
   }
 
-  write.csv(new.df, paste0("output/", FILE_NAME, "_all_summaries.csv"), row.names = FALSE)
+  utils::write.csv(new.df, paste0("output/", FILE_NAME, "_all_summaries.csv"), row.names = FALSE)
 
   invisible(new.df)
 }

@@ -54,11 +54,7 @@
 #' introduction to non-standard evaluation.
 #' @author Maria Kalimeri, Ilari Scheinin, Vilma Jagerroos
 #' @export
-#' @import ggplot2
-#' @import ggforestplot
-#' @import dplyr
 #' @importFrom stats qnorm
-#' @importFrom magrittr %>%
 #' @importFrom rlang := !! enquo quo_is_null
 #' @importFrom grDevices axisTicks
 #' @importFrom scales trans_breaks

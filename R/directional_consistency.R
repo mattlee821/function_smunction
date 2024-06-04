@@ -4,8 +4,7 @@
 #' @description Before using, your data needs to be in wide format, e.g., rows are exposures and columns are the betas for those IDs you want to check consistency for
 #' Convert to wide: `data <- as.data.frame(pivot_wider(data, names_from = group, values_from = beta))`
 #' @param data your data frame
-#'
-
+#' @export
 directional_consistency <- function(data) {
 
   # make col1 rownames

@@ -5,6 +5,7 @@
 #' @param harmonise_action action for harmonising alleles (1,2,3)
 #' @note
 #' you must have a single column called 'sex' in your exposure and outcome data
+#' @export
 harmonise_data_sex <- function(data_exposure, data_outcome, harmonise_action){
   # Check if 'sex' is present in both data frames
   if (!("sex" %in% names(data_exposure)) || !("sex" %in% names(data_outcome))) {
@@ -39,6 +40,7 @@ harmonise_data_sex <- function(data_exposure, data_outcome, harmonise_action){
 #' @param methods a list of methds supplied to "method_list"
 #' @note
 #' you must have a single column called 'sex' in your harmonised data frame
+#' @export
 mr_sex <- function(data_harmonise, methods){
   # Check if 'sex' is present in the data frame
   if (!("sex" %in% names(data_harmonise))) {
@@ -71,6 +73,7 @@ mr_sex <- function(data_harmonise, methods){
 #' @param data_harmonise harmonised data frame
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
+#' @export
 mr_singlesnp_sex <- function(data_harmonise){
   # Check if 'sex' is present in the data frame
   if (!("sex" %in% names(data_harmonise))) {
@@ -103,6 +106,7 @@ mr_singlesnp_sex <- function(data_harmonise){
 #' @param methods_heterogeneity a list of methods to supply to method_list
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
+#' @export
 mr_heterogeneity_sex <- function(data_harmonise, methods_heterogeneity){
   # Check if 'sex' is present in the data frame
   if (!("sex" %in% names(data_harmonise))) {
@@ -135,6 +139,7 @@ mr_heterogeneity_sex <- function(data_harmonise, methods_heterogeneity){
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
 
+#' @export
 mr_pleiotropy_test_sex <- function(data_harmonise){
   # Check if 'sex' is present in the data frame
   if (!("sex" %in% names(data_harmonise))) {
@@ -166,6 +171,7 @@ mr_pleiotropy_test_sex <- function(data_harmonise){
 #' @param data_harmonise harmonised data frame
 #' @note
 #' you must have a single column called 'sex' in your harmonise data frame
+#' @export
 mr_leaveoneout_sex <- function(data_harmonise){
   # Check if 'sex' is present in the data frame
   if (!("sex" %in% names(data_harmonise))) {

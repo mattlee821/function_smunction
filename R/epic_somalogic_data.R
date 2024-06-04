@@ -7,7 +7,6 @@
 #'
 #' @param data A dataframe containing the Epic SomaLogic data.
 #' @return A list of dataframes with sex-specific and subtype data.
-#'
 #' @export
 epic_somalogic_create_subtypes <- function(data) {
   # Function to create subtypes within a dataframe
@@ -60,7 +59,6 @@ epic_somalogic_create_subtypes <- function(data) {
 #' @param data_group A subset of the original dataframe for a specific 'ID_col' group.
 #' @param ID_col The unique identifier for the 'ID_col' group.
 #' @return A list containing sex-specific dataframes.
-#'
 #' @export
 epic_somalogic_create_sex_specific_dataframes <- function(data_group, ID_col) {
   # Create sex-combined and sex-specific dataframes for a given 'ID_col' group
@@ -90,7 +88,6 @@ epic_somalogic_create_sex_specific_dataframes <- function(data_group, ID_col) {
 #' @param data A dataframe containing the Epic SomaLogic data.
 #' @param ID_col The column containing the unique identifier for the 'data_id' group.
 #' @return A list of dataframes with sex-specific and subtype data.
-#'
 #' @export
 epic_somalogic_create_subtype_dataframes <- function(data, ID_col) {
   # Create a list to store the dataframes
@@ -135,7 +132,6 @@ epic_somalogic_create_subtype_dataframes <- function(data, ID_col) {
 #' @param list_data A list of data frames.
 #' @param exclusions A list of exclusions for each data frame.
 #' @return The modified list_data after applying exclusions.
-#'
 #' @export
 epic_somalogic_exclusions <- function(list_data, exclusions) {
 # Iterate over the main list
@@ -214,13 +210,8 @@ return(list_data)
 #' @param list_data A list of data frames.
 #' @param exclusions A list of exclusion criteria for each data frame.
 #' @return The modified list_data after applying exclusions.
-#'
 #' @export
 epic_somalogic_exclusions_test <- function(list_data, exclusions) {
-  # Load the required libraries
-  library(data.table)
-  library(dplyr)
-
   # Iterate over the main list
   for (i in seq_along(list_data)) {
     # Get the name of the current list
@@ -241,7 +232,7 @@ epic_somalogic_exclusions_test <- function(list_data, exclusions) {
           # Check if the current data frame is in the exclusion sublist
           if (current_df_name %in% current_sublist_name) {
             # Convert to data.table
-            dt <- as.data.table(list_data[[i]][[k]])
+            dt <- data.table::as.data.table(list_data[[i]][[k]])
 
             # 1. Print the name of the dataframe
             cat("# Processing:", current_list_name, "/", current_sublist_name, "/", "\n")
@@ -289,7 +280,7 @@ epic_somalogic_exclusions_test <- function(list_data, exclusions) {
   return(list_data)
 }
 
-#' `epic_somalogic_prentic_weighting()`: Prentice weighting function for EPIC somalogic analysis
+#' `epic_somalogic_prentice_weighting()`: Prentice weighting function for EPIC somalogic analysis
 #' @description
 #' This function applies Prentice weighting to the provided data based on follow-up years.
 #' It filters out cases where the age at event is less than the age plus follow-up years,
@@ -298,13 +289,14 @@ epic_somalogic_exclusions_test <- function(list_data, exclusions) {
 #' @param data A data frame containing the EPIC somalogic data
 #' @param followup_years The number of follow-up years used for weighting
 #' @return A processed data frame with Prentice weighting applied
-epic_somalogic_prentic_weighting <- function(data, followup_years) {
-  data <- data %>% filter(ageevent > age + followup_years) %>% mutate(age = age + followup_years)
+#' @export
+epic_somalogic_prentice_weighting <- function(data, followup_years) {
+  data <- data %>% dplyr::filter(ageevent > age + followup_years) %>% mutate(age = age + followup_years)
   cat("* N samples before Prentice weighting (follow-up:", followup_years, "years):", nrow(data), "\n")
-  CasesOutsideSubCohort <- data %>% filter(cvd_t2d_coh == 0 & indevent == 1) %>% mutate(age = ageevent-1e-4)
-  CasesInSubcohort_Ctrls <- data %>% filter(cvd_t2d_coh == 1 & indevent == 1) %>% mutate(ageevent = ageevent-1e-4, indevent = 0)
-  CasesInSubcohort_Cases <- data %>% filter(cvd_t2d_coh == 1 & indevent == 1) %>% mutate(age = ageevent-1e-4, cvd_t2d_coh = 0)
-  ControlsSubcohort <- data %>% filter(cvd_t2d_coh == 1 & indevent == 0)
+  CasesOutsideSubCohort <- data %>% dplyr::filter(cvd_t2d_coh == 0 & indevent == 1) %>% mutate(age = ageevent-1e-4)
+  CasesInSubcohort_Ctrls <- data %>% dplyr::filter(cvd_t2d_coh == 1 & indevent == 1) %>% mutate(ageevent = ageevent-1e-4, indevent = 0)
+  CasesInSubcohort_Cases <- data %>% dplyr::filter(cvd_t2d_coh == 1 & indevent == 1) %>% mutate(age = ageevent-1e-4, cvd_t2d_coh = 0)
+  ControlsSubcohort <- data %>% dplyr::filter(cvd_t2d_coh == 1 & indevent == 0)
   cat("* N samples after Prentice weighting (follow-up:", followup_years, "years):", nrow(bind_rows(CasesOutsideSubCohort, CasesInSubcohort_Ctrls, CasesInSubcohort_Cases, ControlsSubcohort)), "\n")
   bind_rows(CasesOutsideSubCohort, CasesInSubcohort_Ctrls, CasesInSubcohort_Cases, ControlsSubcohort)
 }
@@ -317,6 +309,7 @@ epic_somalogic_prentic_weighting <- function(data, followup_years) {
 #' @param df_complete A complete data frame containing EPIC somalogic data
 #' @param followup_years The number of follow-up years for the analysis
 #' @return A processed data frame with missing values replaced by -9
+#' @export
 epic_somalogic_process_data_complete <- function(df_complete, followup_years) {
   cat("## Converting missing values for data_analysis to -9 (follow-up:", followup_years, "years)", "\n")
   df_complete$bmi_missing <- ifelse(is.na(df_complete$bmi_adj), 1, 0)
@@ -350,6 +343,7 @@ epic_somalogic_process_data_complete <- function(df_complete, followup_years) {
 #'
 #' @param list_df A nested list containing EPIC somalogic data frames
 #' @return A processed nested list of EPIC somalogic data frames for analysis
+#' @export
 epic_somalogic_process_data <- function(list_df) {
   list_processed <- list()  # Initialize the list to store processed data
   # Loop through each nested list in the main list
@@ -380,9 +374,9 @@ epic_somalogic_process_data <- function(list_df) {
       df$l_school <- factor(df$l_school, levels = c("None", "Primary school completed", "Secondary school", "Technical/professional school", "Longer education (incl. University deg.)", "Not specified"))
 
       # prentice weighting ====
-      data_analysis <- epic_somalogic_prentic_weighting(df, 0)
-      data_analysis_excl2year <- epic_somalogic_prentic_weighting(df, 2)
-      data_analysis_excl5year <- epic_somalogic_prentic_weighting(df, 5)
+      data_analysis <- epic_somalogic_prentice_weighting(df, 0)
+      data_analysis_excl2year <- epic_somalogic_prentice_weighting(df, 2)
+      data_analysis_excl5year <- epic_somalogic_prentice_weighting(df, 5)
 
       # make list: processed data ====
       processed_df <- list(
@@ -410,7 +404,7 @@ epic_somalogic_process_data <- function(list_df) {
 #' This function defines three Cox proportional hazards models including
 #'
 #' @return A list containing three Cox proportional hazards models
-#'
+#' @export
 epic_somalogic_models <- function() {
   # Define the list of models
   models <- list(
@@ -447,7 +441,7 @@ epic_somalogic_models <- function() {
 #'
 #' @param list_processed A list from `epic_somalogic_process_data()`
 #' @return A data frame containing the results of Cox proportional hazards analysis
-#'
+#' @export
 epic_somalogic_analysis <- function(list_processed) {
   # Initialize an empty data frame to store results
   data_result <- data.frame(

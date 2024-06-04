@@ -36,15 +36,9 @@
 #' @return A manhattan plot.
 #'
 #' @keywords visualization manhattan
-#'
-#' @import utils
-#' @import graphics
-#' @import stats
-#'
-#' @importFrom calibrate textxy
-#'
+#' @importFrom graphics abline axis par points
+#' @importFrom stats quantile
 #' @export
-
 manhattan <- function(df,
                       chr,
                       bp,
@@ -189,10 +183,10 @@ manhattan <- function(df,
     if (annotateTop == FALSE) {
       if (logp) {
         with(subset(d, P <= annotatePval),
-             textxy(pos, -log10(P), offset = 0.625, labs = topHits$SNP, cex = 0.45), ...)
+             calibrate::textxy(pos, -log10(P), offset = 0.625, labs = topHits$SNP, cex = 0.45), ...)
       } else
         with(subset(d, P >= annotatePval),
-             textxy(pos, P, offset = 0.625, labs = topHits$SNP, cex = 0.45), ...)
+             calibrate::textxy(pos, P, offset = 0.625, labs = topHits$SNP, cex = 0.45), ...)
     }
     else {
       # could try alternative, annotate top SNP of each sig chr
@@ -206,9 +200,9 @@ manhattan <- function(df,
 
       }
       if (logp ){
-        textxy(topSNPs$pos, -log10(topSNPs$P), offset = 0.625, labs = topSNPs$SNP, cex = 0.5, ...)
+        calibrate::textxy(topSNPs$pos, -log10(topSNPs$P), offset = 0.625, labs = topSNPs$SNP, cex = 0.5, ...)
       } else
-        textxy(topSNPs$pos, topSNPs$P, offset = 0.625, labs = topSNPs$SNP, cex = 0.5, ...)
+        calibrate::textxy(topSNPs$pos, topSNPs$P, offset = 0.625, labs = topSNPs$SNP, cex = 0.5, ...)
     }
   }
   par(xpd = FALSE)

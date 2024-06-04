@@ -7,22 +7,22 @@
 remove_duplicate_SNP(df)
 }
 \arguments{
-\item{df}{A data frame.}
+\item{df}{A data frame containing SNP and cis_trans columns.}
 }
 \value{
-A modified data frame with duplicate rows removed.
-\dontrun{
-for (i in seq_along(list_data_cis_trans)) {
-df <- list_data_cis_trans[\link{i}]
-df <- remove_duplicate_SNP(df)
-df <- remove_nearby_positions(df)
-list_data_cis_trans[\link{i}] <- df
-}
+A modified data frame with duplicate rows removed based on SNP, prioritizing "cis" rows.
 }
 \description{
-This function removes duplicate rows based on the SNP column,
-keeping only the rows with "cis" in the "cis_trans" column.
-It iterates through each row with "cis" in the "cis_trans" column,
-checks if there are duplicate rows with the same value in the SNP column,
-and removes the duplicates, keeping the row with "cis" in the "cis_trans" column.
+This function removes duplicate rows based on the "SNP" column, prioritizing rows with "cis" in the "cis_trans" column.
+For a given SNP, it keeps only one row, prioritizing the row with "cis" in "cis_trans" and removing others.
+}
+\details{
+Example usage:
+\code{#' for (i in seq_along(list_data_cis_trans)) {
+  df <- list_data_cis_trans[[i]]
+  df <- remove_duplicate_SNP(df)
+  df <- remove_nearby_positions(df)
+  list_data_cis_trans[[i]] <- df
+}
+}
 }

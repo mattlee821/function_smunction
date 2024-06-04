@@ -330,10 +330,8 @@ format_data <- function (dat, type = "exposure", snps = NULL, header = TRUE,
 #' @param chr_col Character string specifying the column name for chromosome, defaults to "chr".
 #' @param pos_col Character string specifying the column name for position, defaults to "pos".
 #' @param log_pval Logical indicating if p-values should be log-transformed, defaults to FALSE.
-#'
 #' @return A formatted dataset ready for analysis.
 #' @export
-#'
 format_data2 <- function (dat, type = "exposure", snps = NULL, header = TRUE,
                           phenotype_col = "Phenotype", snp_col = "SNP", beta_col = "beta",
                           se_col = "se", eaf_col = "eaf", effect_allele_col = "effect_allele",
@@ -607,21 +605,20 @@ format_data2 <- function (dat, type = "exposure", snps = NULL, header = TRUE,
 
 #' Remove duplicate rows based on SNP column
 #'
-#' This function removes duplicate rows based on the SNP column,
-#' keeping only the rows with "cis" in the "cis_trans" column.
-#' It iterates through each row with "cis" in the "cis_trans" column,
-#' checks if there are duplicate rows with the same value in the SNP column,
-#' and removes the duplicates, keeping the row with "cis" in the "cis_trans" column.
+#' This function removes duplicate rows based on the "SNP" column, prioritizing rows with "cis" in the "cis_trans" column.
+#' For a given SNP, it keeps only one row, prioritizing the row with "cis" in "cis_trans" and removing others.
 #'
-#' @param df A data frame.
-#' @return A modified data frame with duplicate rows removed.
-#' \dontrun{
-#' for (i in seq_along(list_data_cis_trans)) {
+#' Example usage:
+#' \code{#' for (i in seq_along(list_data_cis_trans)) {
 #'   df <- list_data_cis_trans[[i]]
 #'   df <- remove_duplicate_SNP(df)
 #'   df <- remove_nearby_positions(df)
 #'   list_data_cis_trans[[i]] <- df
 #' }
+#' }
+#'
+#' @param df A data frame containing SNP and cis_trans columns.
+#' @return A modified data frame with duplicate rows removed based on SNP, prioritizing "cis" rows.
 #' @export
 remove_duplicate_SNP <- function(df) {
   cis_rows <- which(df$cis_trans == "cis")
@@ -635,23 +632,25 @@ remove_duplicate_SNP <- function(df) {
   return(df)
 }
 
-#' Remove rows with nearby positions
+#' Remove rows with nearby positions (excluding "cis" and "cis-trans_cis")
 #'
-#' This function removes rows with nearby positions, keeping only the rows with "cis"
-#' in the "cis_trans" column. It iterates through each row with "cis" in the "cis_trans" column,
-#' checks if there are other rows with the same value in the "chr.exposure" column,
-#' and if the positions are within ±500,000. If such rows are found, it removes the rows
-#' without "cis" in the "cis_trans" column.
+#' This function removes rows with positions within ±1mb of a "cis" or "cis-trans_cis" row,
+#' excluding the "cis" or "cis-trans_cis" row itself. It iterates through rows with "cis" or "cis-trans_cis" in "cis_trans",
+#' checks for other rows with the same chromosome but positions within the threshold.
+#' If such rows exist and their "cis_trans" is not "cis" or "cis-trans_cis", it removes those rows.
 #'
-#' @param df A data frame.
-#' @return A modified data frame with rows removed based on nearby positions.
-#' \dontrun{
+#' Example usage:
+#' \code{
 #' for (i in seq_along(list_data_cis_trans)) {
 #'   df <- list_data_cis_trans[[i]]
 #'   df <- remove_duplicate_SNP(df)
 #'   df <- remove_nearby_positions(df)
 #'   list_data_cis_trans[[i]] <- df
 #' }
+#' }
+#'
+#' @param df A data frame containing chr.exposure, pos.exposure, and cis_trans columns.
+#' @return A modified data frame with rows removed based on nearby positions (excluding "cis" and "cis-trans_cis").
 #' @export
 remove_nearby_positions <- function(df) {
   cis_rows <- which(df$cis_trans %in% c("cis", "cis-trans_cis"))
@@ -660,15 +659,18 @@ remove_nearby_positions <- function(df) {
     pos_exposure_value <- df$pos.exposure[row_index]
     duplicate_chr_exposure <- which(df$chr.exposure == chr_exposure_value & !df$cis_trans %in% c("cis", "cis-trans_cis"))
     if (length(duplicate_chr_exposure) > 0) {
+      rows_to_remove <- c()
       for (row_index2 in duplicate_chr_exposure) {
         # Check for missing values before accessing the cis_trans column
         if (!is.na(df$cis_trans[row_index2]) && !df$cis_trans[row_index2] %in% c("cis", "cis-trans_cis")) {
-          pos_diff <- abs(df$pos.exposure[row_index2] - pos_exposure_value)
-          if (pos_diff <= 1000000 || pos_diff >= 1000000) {
-            df <- df[-row_index2, ]
+          pos_diff <- df$pos.exposure[row_index2] - pos_exposure_value
+          if (abs(pos_diff) <= 1000000) {
+            rows_to_remove <- c(rows_to_remove, row_index2)
           }
         }
       }
+      # Remove rows outside the inner loop to prevent modifying the data frame while iterating
+      df <- df[-rows_to_remove, ]
     }
   }
   return(df)
@@ -705,6 +707,7 @@ remove_nearby_positions <- function(df) {
 #' @param outcome_ID ID column name of your GWAS
 #' @param outcome_CHR CHR column name of your GWAS
 #' @param outcome_POS POS column name of your GWAS
+#' @export
 proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_reference, data_reference_path,
                          tag_r2 = 0.8, tag_kb = 5000, tag_nsnp = 5000,
                          outcome_sep, outcome_phenotype, outcome_SNP, outcome_BETA, outcome_SE, outcome_P,
@@ -1193,14 +1196,14 @@ calculate_fstat_from_beta_se <- function(data) {
 #' @export
 replace_na_with_mean <- function(data, grouping_column, column_name) {
   mean_values <- data %>%
-    group_by({{ grouping_column }}) %>%
-    summarize(mean_value = mean({{ column_name }}, na.rm = TRUE)) %>%
-    filter(!is.infinite(mean_value))  # Filter out Inf values
+    dplyr::group_by({{ grouping_column }}) %>%
+    dplyr::summarize(mean_value = mean({{ column_name }}, na.rm = TRUE)) %>%
+    dplyr::filter(!is.infinite(mean_value))  # Filter out Inf values
 
   result <- data %>%
-    left_join(mean_values, by = {{ grouping_column }}) %>%
-    mutate({{ column_name }} := ifelse(is.na({{ column_name }}), mean_value, {{ column_name }})) %>%
-    select(-mean_value)
+    dplyr::left_join(mean_values, by = {{ grouping_column }}) %>%
+    dplyr::mutate({{ column_name }} := ifelse(is.na({{ column_name }}), mean_value, {{ column_name }})) %>%
+    dplyr::select(-mean_value)
 
   return(result)
 }
@@ -1216,7 +1219,6 @@ replace_na_with_mean <- function(data, grouping_column, column_name) {
 #' @param reference The file path to the reference data containing EAF information.
 #' @param column_EAF The name of the column containing EAF values. If no column then this will be the name of the new column.
 #' @return The input dataframe with missing EAF values filled.
-#' @import data.table dplyr
 #' @export
 missing_EAF <- function(df, reference, column_EAF) {
   if (!(column_EAF %in% colnames(df)) || any(is.na(df[[column_EAF]]))) {
@@ -1227,18 +1229,16 @@ missing_EAF <- function(df, reference, column_EAF) {
                  header = TRUE,
                  select = c("Predictor", "A1", "A2", "MAF"), # Select only necessary columns
                  data.table = FALSE) %>%
-      filter(Predictor %in% df$SNP) %>%
-      rename(EAF = MAF)
+      dplyr::filter(Predictor %in% df$SNP) %>%
+      dplyr::rename(EAF = MAF)
 
     df <- df %>%
-      left_join(EAF, by = c("SNP" = "Predictor")) %>%
-      mutate(!!column_EAF := ifelse(is.na(!!rlang::sym(column_EAF)),
+      dplyr::left_join(EAF, by = c("SNP" = "Predictor")) %>%
+      dplyr::mutate(!!column_EAF := ifelse(is.na(!!rlang::sym(column_EAF)),
                                     ifelse(effect_allele.outcome == A1 & other_allele.outcome == A2, EAF,
                                            ifelse(effect_allele.outcome == A2 & other_allele.outcome == A1, 1 - EAF, !!rlang::sym(column_EAF))),
                                     !!rlang::sym(column_EAF))) %>%
-      select(-A1, -A2, -EAF)
+      dplyr::select(-A1, -A2, -EAF)
   }
   return(df)
 }
-
-
