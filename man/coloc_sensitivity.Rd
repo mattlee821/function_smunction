@@ -6,16 +6,16 @@
 \usage{
 coloc_sensitivity(
   obj,
-  rule = "",
-  trait1_title,
-  trait2_title,
+  rule = "H4 > 0.8",
+  trait1_title = "trait 1",
+  trait2_title = "trait 2",
   dataset1 = NULL,
   dataset2 = NULL,
   npoints = 100,
-  doplot = TRUE,
-  plot.manhattans = TRUE,
-  preserve.par = FALSE,
-  row = 1
+  suppress_messages = FALSE,
+  row = 1,
+  data_check_trait1 = NULL,
+  data_check_trait2 = NULL
 )
 }
 \arguments{
@@ -23,9 +23,9 @@ coloc_sensitivity(
 
 \item{rule}{Decision rule for acceptable posterior probabilities.}
 
-\item{trait1_title}{Title for the first trait.}
+\item{trait1_title}{Title for the first trait (default: "trait 1").}
 
-\item{trait2_title}{Title for the second trait.}
+\item{trait2_title}{Title for the second trait (default: "trait 2").}
 
 \item{dataset1}{Optional dataset for the first trait.}
 
@@ -33,13 +33,13 @@ coloc_sensitivity(
 
 \item{npoints}{Number of points for evaluating prior values. Default is \code{100}.}
 
-\item{doplot}{Whether to draw the plot. Default is \code{TRUE}.}
-
-\item{plot.manhattans}{Whether to show Manhattan plots. Default is \code{TRUE}.}
-
-\item{preserve.par}{Whether to preserve the current graphics device parameters. Default is \code{FALSE}.}
+\item{suppress_messages}{Logical, whether to suppress messages (default is FALSE).}
 
 \item{row}{Row number for coloc summary if multiple rows are present. Default is \code{1}.}
+
+\item{data_check_trait1}{Data for trait 1 to be checked.}
+
+\item{data_check_trait2}{Data for trait 2 to be checked.}
 }
 \value{
 List of prior matrix, posterior matrix, and a pass/fail indicator (returned invisibly).
