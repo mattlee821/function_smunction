@@ -84,6 +84,12 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
     ncol = 1, nrow = 2
   )
 
+  # locuszoom plots ====
+  plot_locuscompare <- locuscomparer_make_plot(data_coloc_exposure = data_check_trait1,
+                                               data_coloc_outcome = data_check_trait2,
+                                               SNP_causal_exposure = SNP_causal_exposure$snp,
+                                               trait1_title = trait1_title, trait2_title = trait2_title)
+
   # Manhattan plots ====
   if ("z.df1" %in% colnames(results) && "z.df2" %in% colnames(results)) {
     plot_manhattan <- cowplot::plot_grid(
@@ -108,12 +114,12 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
       m = m[[i]],
       pass = pass
     ) %>%
-      pivot_longer(
+      tidyr::pivot_longer(
         cols = if (i == 1) c("m.H0", "m.H1", "m.H2", "m.H3", "m.H4")
         else c("m.PP.H0.abf", "m.PP.H1.abf", "m.PP.H2.abf", "m.PP.H3.abf", "m.PP.H4.abf"),
         names_to = "name", values_to = "value"
       ) %>%
-      mutate(name = fct_recode(name,
+      mutate(name = forcats::fct_recode(name,
                                H0 = if (i == 1) "m.H0" else "m.PP.H0.abf",
                                H1 = if (i == 1) "m.H1" else "m.PP.H1.abf",
                                H2 = if (i == 1) "m.H2" else "m.PP.H2.abf",
@@ -159,14 +165,32 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
                                            ncol = 1, nrow = 2)
 
   # combined plot ====
-  plot_sensitivity <- cowplot::plot_grid(
-    plot_distribution,
-    plot_alignment,
-    plot_manhattan,
-    plot_probabilities,
-    ncol = 4, labels = c("A", "B", "C", "D"),
-    rel_widths = c(1,1,1,1)
+  plot_row1 <- cowplot::plot_grid(
+    plot_distribution,  # A
+    plot_alignment,     # B
+    plot_manhattan,     # C
+    labels = c("A", "B", "C"),
+    ncol = 3,
+    rel_widths = c(1, 1, 1)
   )
+  plot_row2 <- cowplot::plot_grid(
+    plot_locuscompare,  # D
+    plot_probabilities, # E
+    labels = c("D", "E"),
+    ncol = 2,
+    rel_widths = c(1.3, 0.7)
+  )
+
+  # Combine the two rows into one plot
+  plot_sensitivity <- cowplot::plot_grid(
+    plot_row1,
+    plot_row2,
+    ncol = 1,
+    rel_heights = c(1, 1)
+  )
+
+  plot_sensitivity
+
   return(plot_sensitivity)
   invisible(cbind(testpp, p12 = testp12, pass = pass))
 }
@@ -260,12 +284,13 @@ coloc_manh.plot <- function(df, wh,
          y = "-log10(p)",
          title = paste("Distribution / H4"),
          fill = "H4") +
+    scale_x_continuous(
+      breaks = c(min(df$position), max(df$position)),  # Set breaks to min and max values
+      labels = c(min(df$position), max(df$position))  # Set labels to min and max values
+    ) +
     cowplot::theme_cowplot() +
     theme(legend.position = "right",
-          legend.title = element_text(hjust = 0, vjust = 1),  # Center-align the legend title
-          axis.ticks.x = element_blank(),
-          axis.text.x = element_blank(),  # Remove x-axis text
-          axis.title.x = element_blank())  # Remove x-axis title
+          legend.title = element_text(hjust = 0, vjust = 1))  # Center-align the legend title
   return(p)
 }
 
@@ -343,7 +368,6 @@ coloc_plot_dataset <- function(d, label = "distribution", susie_obj = NULL, high
     snp = d$snp,
     LD = as.vector(d$LD)  # Flatten LD matrix to vector
   )
-  df <- df[1:10000,]
 
   # Calculate y values
   if (is.null(alty)) {
@@ -353,15 +377,14 @@ coloc_plot_dataset <- function(d, label = "distribution", susie_obj = NULL, high
   }
 
   # Create ggplot object
-  p <- ggplot(data = df,
-              aes(x = position, y = y)) +
+  p <- ggplot(data = df, aes(x = position, y = y)) +
     geom_point(shape = 21, size = 3, color = "white", fill = "grey") +
     labs(x = "Position", y = ylab, title = label) +
-    cowplot::theme_cowplot() +
-    theme(legend.position = "bottom",
-          axis.ticks.x = element_blank(),
-          axis.text.x = element_blank(),  # Remove x-axis text
-          axis.title.x = element_blank())  # Remove x-axis title
+    scale_x_continuous(
+      breaks = c(min(df$position), max(df$position)),  # Set breaks to min and max values
+      labels = c(min(df$position), max(df$position))  # Set labels to min and max values
+    ) +
+    cowplot::theme_cowplot()
   # Add highlight points if highlight_list is provided
   if (!is.null(highlight_list)) {
     p <- p +
