@@ -16,13 +16,18 @@ Imports:
   ggforestplot,
   rlang,
   scales,
-  calibrate
+  calibrate,
+  cowplot,
+  dplyr,
+  reshape2,
+  forcats,
+  ggrepel,
+  locuscomparer,
+  tidyr
 Suggests:
   AICcmodavg,
   coloc,
-  cowplot,  
   data.table,
-  dplyr,
   ggstance,
   gwasvcf,  
   here,
