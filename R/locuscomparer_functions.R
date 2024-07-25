@@ -28,6 +28,14 @@ locuscomparer_make_df <- function(data_coloc_exposure, data_coloc_outcome, SNP_c
   df <- merge(df1, df2, by = "rsid", suffixes = c("1", "2"), all = FALSE)
   df <- locuscomparer_add_label(df, SNP_causal_exposure)
 
+  # Replace Inf values with 10% larger than the maximum finite value
+  max_logp <- max(df$logp1[is.finite(df$logp1)])
+  V1 <- max_logp * 1.1
+  df$logp1[is.infinite(df$logp1)] <- V1
+  max_logp <- max(df$logp2[is.finite(df$logp2)])
+  V1 <- max_logp * 1.1
+  df$logp2[is.infinite(df$logp2)] <- V1
+
   # Convert LD to df
   df_ld <- reshape2::melt(data_coloc_exposure$LD)
   colnames(df_ld) <- c("SNP_A", "SNP_B", "R2")
@@ -160,7 +168,7 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
 
   df2 = df[,c('rsid', 'logp2', 'pos', 'label')]
   colnames(df2)[which(colnames(df2) == 'logp2')] = 'logp'
-  p3 <- locuscomparer_make_locuszoom(df = df1, trait_title = trait2_title, colour = colour, shape = shape, size = size)
+  p3 <- locuscomparer_make_locuszoom(df = df2, trait_title = trait2_title, colour = colour, shape = shape, size = size)
 
   if (combine) {
     p2 = p2 + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
@@ -203,18 +211,29 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
 #'
 #' @return A \code{ggplot} object representing the scatter plot comparing two traits.
 #' @export
-locuscomparer_make_scatterplot = function (df, trait1_title, trait2_title, colour, shape, size, legend = TRUE, legend_position = c('bottomright','topright','topleft')) {
+locuscomparer_make_scatterplot = function (df,
+                                           trait1_title,
+                                           trait2_title,
+                                           colour, shape, size,
+                                           legend = TRUE, legend_position = c('bottomright','topright','topleft')) {
+
+  x_max <- max(df$logp1, na.rm = TRUE) * 1.1
+  y_max <- max(df$logp2, na.rm = TRUE) * 1.1
 
   p <- ggplot(df, aes(logp1, logp2)) +
-    geom_point(aes(fill = rsid, size = rsid, shape = rsid), alpha = 0.8) +
+    geom_point(aes(fill = rsid, size = rsid, shape = rsid),
+               alpha = 0.8) +
     geom_point(data = df[df$label != "",],
-               aes(logp1, logp2, fill = rsid, size = rsid, shape = rsid)) +
+               aes(x = logp1, y = logp2,
+                   fill = rsid, size = rsid, shape = rsid)) +
     xlab(bquote(.(trait1_title) ~ -log[10] * '(P)')) +
     ylab(bquote(.(trait2_title) ~ -log[10] * '(P)')) +
     scale_fill_manual(values = colour, guide = "none") +
     scale_shape_manual(values = shape, guide = "none") +
     scale_size_manual(values = size, guide = "none") +
-    ggrepel::geom_text_repel(aes(label = label))+
+    ggrepel::geom_text_repel(aes(label = label)) +
+    scale_x_continuous(limits = c(0, x_max)) +
+    scale_y_continuous(limits = c(0, y_max)) +
     theme_classic()
 
   if (legend == TRUE) {
@@ -297,7 +316,7 @@ locuscomparer_make_locuszoom <- function(df, ylab = "-log10(p)", trait_title = "
       name = "Position",
       limits = c(x_min, x_max)  # Ensure limits include the data range
     ) +
-    ggrepel::geom_text_repel(aes(label = label)) +
+    ggrepel::geom_text_repel(aes(label = label), max.overlaps = Inf) +
     labs(x = "Position", y = ylab, title = trait_title) +
     theme_classic() +
     theme(
