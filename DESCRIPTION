@@ -23,7 +23,10 @@ Imports:
   forcats,
   ggrepel,
   locuscomparer,
-  tidyr
+  tidyr,
+  haven,
+  readstata13,
+  readxl
 Suggests:
   AICcmodavg,
   coloc,
