@@ -31,11 +31,11 @@
 #' @details
 #' This function performs several data processing steps:
 #' \itemize{
-#' \item Excludes features with extreme missingness based on a specified threshold.
-#' \item Imputes missing values using various methods.
-#' \item Transforms the data using specified methods.
-#' \item Corrects for plate effects using specified random and fixed effects.
-#' \item Handles case-control data to ensure matched samples are treated appropriately.
+#'   \item Excludes features with extreme missingness based on a specified threshold.
+#'   \item Imputes missing values using various methods.
+#'   \item Transforms the data using specified methods.
+#'   \item Corrects for plate effects using specified random and fixed effects.
+#'   \item Handles case-control data to ensure matched samples are treated appropriately.
 #' }
 #'
 #' @import dplyr
@@ -391,11 +391,12 @@ process_data <- function(
 #' It accounts for random effects and fixed effects specified by the user, and optionally
 #' corrects for heteroskedasticity.
 #'
-#' @param list A list containing:
+#' @param list A list containing the following elements:
+#' \describe{
 #'   \item{data_features}{A data frame or tibble of dimensions n x (K+p) with:
 #'     \describe{
 #'       \item{n}{Number of observations.}
-#'       \item{p}{Number of features}
+#'       \item{p}{Number of features.}
 #'       \item{K}{Number of variables used for unique identification of individuals.}
 #'     }}
 #'   \item{data_samples}{A data frame or tibble of dimensions n x (K+d) with:
@@ -404,7 +405,8 @@ process_data <- function(
 #'       \item{K}{Number of unique identifiers.}
 #'       \item{d}{Additional variables useful in final analysis (e.g., country, age, BMI).}
 #'     }}
-#'   \item{data_meta_features}{A p x 3 matrix indicating each features Name, Class, and Type.}
+#'   \item{data_meta_features}{A p x 3 matrix indicating each feature's Name, Class, and Type.}
+#' }
 #' @param forIdentifier A character vector of strings indicating the names of variables used for unique identification of individuals.
 #' @param listRandom A character vector of strings containing variable names modeled as random effects to be removed. If not NULL, should be either of length 1 or contain nested variables.
 #' @param listFixedToKeep A character vector of strings containing variable names modeled as fixed effects to be kept.
@@ -427,10 +429,10 @@ normalization_residualMixedModels <- function(list,
 
   # Convert list of data frames to tibble and unite identifiers ====
   data_features <- as_tibble(list$data_features) %>%
-    unite(IdentifierPipeline, all_of(forIdentifier), sep = "", remove = FALSE) %>%
+    tidyr::unite(IdentifierPipeline, all_of(forIdentifier), sep = "", remove = FALSE) %>%
     arrange(IdentifierPipeline)
   data_samples <- as_tibble(list$data_samples) %>%
-    unite(IdentifierPipeline, all_of(forIdentifier), sep = "", remove = FALSE) %>%
+    tidyr::unite(IdentifierPipeline, all_of(forIdentifier), sep = "", remove = FALSE) %>%
     arrange(IdentifierPipeline)
   data_meta_features <- as_tibble(list$data_meta_features)
 
@@ -520,7 +522,7 @@ FUNnormalization_residualMixedModels <- function(df,
   if (!is.null(listFixedToKeep)) {
     df_temp <- data.frame(df_lmer[, listFixedToKeep])
     colnames(df_temp) <- listFixedToKeep
-    XFixedToKeep <- model.matrix(~ ., data = df_temp)
+    XFixedToKeep <- stats::model.matrix(~ ., data = df_temp)
   }
 
   if (is.null(HeteroSked)) {
@@ -532,9 +534,9 @@ FUNnormalization_residualMixedModels <- function(df,
                             error = function(e) NULL)
     if (!is.null(tochecklmer)) {
       if (!is.null(listFixedToKeep)) {
-        Y1[indNoNAs] <- XFixedToKeep %*% matrix(fixef(tochecklmer)[names(fixef(tochecklmer)) %in% colnames(XFixedToKeep)], ncol = 1) + resid(tochecklmer)
+        Y1[indNoNAs] <- XFixedToKeep %*% matrix(fixef(tochecklmer)[names(fixef(tochecklmer)) %in% colnames(XFixedToKeep)], ncol = 1) + stats::resid(tochecklmer)
       } else {
-        Y1[indNoNAs] <- mean(y) + resid(tochecklmer)
+        Y1[indNoNAs] <- mean(y) + stats::resid(tochecklmer)
       }
     }
   } else {
@@ -549,12 +551,12 @@ FUNnormalization_residualMixedModels <- function(df,
                            error = function(e) NULL)
 
     if (!is.null(tochecklme)) {
-      forrescale <- sd(residuals(tochecklme, type = "pearson")) / sd(residuals(tochecklme))
+      forrescale <- sd(stats::residuals(tochecklme, type = "pearson")) / sd(stats::residuals(tochecklme))
       if (!is.null(listFixedToKeep)) {
         Y1[indNoNAs] <- XFixedToKeep %*% matrix(fixed.effects(tochecklme)[names(fixed.effects(tochecklme)) %in% colnames(XFixedToKeep)], ncol = 1) +
-          residuals(tochecklme, type = "pearson") / forrescale
+          stats::residuals(tochecklme, type = "pearson") / forrescale
       } else {
-        Y1[indNoNAs] <- mean(y) + residuals(tochecklme, type = "pearson") / forrescale
+        Y1[indNoNAs] <- mean(y) + stats::residuals(tochecklme, type = "pearson") / forrescale
       }
     }
   }
