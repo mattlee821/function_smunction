@@ -11,52 +11,26 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Imports:
-  magrittr,
-  ggplot2,
-  ggforestplot,
-  rlang,
-  scales,
-  calibrate,
-  cowplot,
-  dplyr,
-  reshape2,
-  forcats,
-  ggrepel,
-  locuscomparer,
-  tidyr,
-  haven,
-  readstata13,
-  readxl,
-  GGally, 
-  bigutilsr,
-  impute, 
-  imputeLCMD,
-  missForest,
-  missMethods, 
-  pcaMethods,
-  tibble,
-  viridis,
-  doParallel
-Suggests:
-  AICcmodavg,
-  coloc,
-  data.table,
-  ggstance,
-  gwasvcf,  
-  here,
-  genetics.binaRies,  
+  dplyr, forcats, ggplot2, tibble, tidyr, tidyverse,
   plyr,
+  magrittr,
+  data.table,
+  here,
   rmarkdown,
   stats,
-  survival,
-  TwoSampleMR,
   utils,
-  wesanderson
+  rlang,
+  AICcmodavg,coloc,susieR,ggstance,gwasvcf,genetics.binaRies,survival,TwoSampleMR,
+  wesanderson,ggforestplot,scales,calibrate,cowplot,reshape2,ggrepel,locuscomparer,
+  haven,readstata13,readxl,GGally,bigutilsr,impute,imputeLCMD,missForest,
+  missMethods,pcaMethods,viridis,doParallel,lmtest,clusterProfiler,hglm,lme4,nlme
+Suggests:
 Remotes:
-    NightingaleHealth/ggforestplot,
-    MRCIEU/genetics.binaRies,
-    MRCIEU/gwasvcf,
-    MRCIEU/TwoSampleMR,
-    MRCIEU/ieugwasr
+  NightingaleHealth/ggforestplot,
+  MRCIEU/genetics.binaRies,
+  MRCIEU/gwasvcf,
+  MRCIEU/TwoSampleMR,
+  MRCIEU/ieugwasr,
+  boxiangliu/locuscomparer
 Files:
-    inst/doc/imputation-test.qmd
+  inst/doc/imputation-test.qmd
