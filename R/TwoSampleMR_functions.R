@@ -620,6 +620,8 @@ format_data2 <- function (dat, type = "exposure", snps = NULL, header = TRUE,
 #' @param df A data frame containing SNP and cis_trans columns.
 #' @return A modified data frame with duplicate rows removed based on SNP, prioritizing "cis" rows.
 #' @export
+#' @importFrom dplyr filter
+#' @importFrom dplyr slice
 remove_duplicate_SNP <- function(df) {
   cis_rows <- which(df$cis_trans == "cis")
   for (row_index in cis_rows) {
@@ -652,6 +654,9 @@ remove_duplicate_SNP <- function(df) {
 #' @param df A data frame containing chr.exposure, pos.exposure, and cis_trans columns.
 #' @return A modified data frame with rows removed based on nearby positions (excluding "cis" and "cis-trans_cis").
 #' @export
+#' @importFrom dplyr filter
+#' @importFrom dplyr slice
+#' @importFrom dplyr pull
 remove_nearby_positions <- function(df) {
   cis_rows <- which(df$cis_trans %in% c("cis", "cis-trans_cis"))
   for (row_index in cis_rows) {
@@ -708,6 +713,12 @@ remove_nearby_positions <- function(df) {
 #' @param outcome_CHR CHR column name of your GWAS
 #' @param outcome_POS POS column name of your GWAS
 #' @export
+#' @import dplyr
+#' @importFrom dplyr group_by
+#' @importFrom data.table fread
+#' @importFrom TwoSampleMR read_outcome_data
+#' @importFrom genetics.binaRies get_plink_binary
+#' @importFrom gwasvcf set_plink
 proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_reference, data_reference_path,
                          tag_r2 = 0.8, tag_kb = 5000, tag_nsnp = 5000,
                          outcome_sep, outcome_phenotype, outcome_SNP, outcome_BETA, outcome_SE, outcome_P,
@@ -830,6 +841,12 @@ proxy_search <- function(data_exposure, data_outcome, data_outcome_path, data_re
 #' @param outcome_POS Column name for the position in the outcome data.
 #' @return Data frame with proxy SNPs added.
 #' @export
+#' @import dplyr
+#' @importFrom data.table fread
+#' @importFrom TwoSampleMR read_outcome_data
+#' @importFrom genetics.binaRies get_plink_binary
+#' @importFrom gwasvcf set_plink
+#' @importFrom functions get_ld_proxies
 proxy_search_split <- function(data_exposure, data_outcome, data_outcome_path, data_reference, data_reference_path,
                                tag_r2 = 0.8, tag_kb = 5000, tag_nsnp = 5000,
                                outcome_sep, outcome_phenotype, outcome_SNP, outcome_BETA, outcome_SE, outcome_P,
@@ -956,6 +973,10 @@ proxy_search_split <- function(data_exposure, data_outcome, data_outcome_path, d
 #' @param outcome_sep Delimiter used in the outcome data file.
 #' @return Data frame with proxy SNPs added.
 #' @export
+#' @import dplyr
+#' @importFrom data.table fread
+#' @importFrom gwasvcf set_plink
+#' @importFrom genetics.binaRies get_plink_binary
 proxy_search_DECODE <- function(data_exposure, data_outcome, data_outcome_path, data_reference,
                                 data_reference_path, tag_r2 = 0.8, tag_kb = 5000, tag_nsnp = 5000,
                                 outcome_sep) {
@@ -1078,6 +1099,10 @@ proxy_search_DECODE <- function(data_exposure, data_outcome, data_outcome_path, 
 #' @param outcome_sep Delimiter used in the outcome data file.
 #' @return Data frame with proxy SNPs added.
 #' @export
+#' @import dplyr
+#' @importFrom data.table fread
+#' @importFrom gwasvcf set_plink
+#' @importFrom genetics.binaRies get_plink_binary
 proxy_search_UKB <- function(data_exposure, data_outcome, data_outcome_path, data_reference,
                              data_reference_path, tag_r2 = 0.8, tag_kb = 5000, tag_nsnp = 5000,
                              outcome_sep) {
@@ -1143,7 +1168,7 @@ proxy_search_UKB <- function(data_exposure, data_outcome, data_outcome_path, dat
                                 col.names = c("ID", "REF", "ALT", "SNP", "POS19", "POS38"))
   data_outcome_proxies <- data_outcome_proxies %>%
     dplyr::filter(SNP %in% proxy_snps)
-  data_outcome_proxies <- separate(data_outcome_proxies, ID, into = c("chr.outcome", "pos.outcome", "ID", "other_allele.outcome", "effect_allele.outcome", "eaf.outcome",
+  data_outcome_proxies <- tidyr::separate(data_outcome_proxies, ID, into = c("chr.outcome", "pos.outcome", "ID", "other_allele.outcome", "effect_allele.outcome", "eaf.outcome",
                                                                       "INFO", "samplesize.outcome", "TEST", "beta.outcome", "se.outcome", "CHISQ", "LOG10P", "EXTRA", "outcome", "ID2"), sep = " ")
   data_outcome_proxies <- data_outcome_proxies %>%
     # dplyr::filter(SNP %in% proxy_snps) %>%
@@ -1192,6 +1217,7 @@ proxy_search_UKB <- function(data_exposure, data_outcome, data_outcome_path, dat
 #' @param data Data frame containing SNP data.
 #' @return Data frame with r2 values added.
 #' @export
+#' @importFrom dplyr mutate
 calculate_r2 <- function(data) {
   r2 <- (2 * (data$beta^2) * data$eaf.exposure * (1 - data$eaf.exposure)) /
     ((2 * (data$beta^2) * data$eaf.exposure * (1 - data$eaf.exposure)) +
@@ -1207,6 +1233,7 @@ calculate_r2 <- function(data) {
 #' @param grouping_column Column to group by.
 #' @return Data frame with fstat values added.
 #' @export
+#' @import dplyr
 calculate_fstat_from_r2 <- function(data, grouping_column) {
   # Group by the specified column and calculate fstat for each group
   result <- data %>%
@@ -1226,6 +1253,7 @@ calculate_fstat_from_r2 <- function(data, grouping_column) {
 #' @param data Data frame containing SNP data.
 #' @return Data frame with fstat values added.
 #' @export
+#' @import dplyr
 calculate_fstat_from_beta_se <- function(data) {
   f_stats <- (data$beta.exposure / data$se.exposure)^2
   data$fstat_from_b_se <- f_stats
@@ -1246,6 +1274,7 @@ calculate_fstat_from_beta_se <- function(data) {
 #' @param column_name Name of the column with missing values.
 #' @return Data frame with missing values replaced by mean.
 #' @export
+#' @import dplyr
 replace_na_with_mean <- function(data, grouping_column, column_name) {
   mean_values <- data %>%
     dplyr::group_by({{ grouping_column }}) %>%
@@ -1272,6 +1301,9 @@ replace_na_with_mean <- function(data, grouping_column, column_name) {
 #' @param column_EAF The name of the column containing EAF values. If no column then this will be the name of the new column.
 #' @return The input dataframe with missing EAF values filled.
 #' @export
+#' @import dplyr
+#' @importFrom rlang sym :=
+#' @importFrom data.table fread
 missing_EAF <- function(df, reference, column_EAF) {
   if (!(column_EAF %in% colnames(df)) || any(is.na(df[[column_EAF]]))) {
     if (!(column_EAF %in% colnames(df))) {
