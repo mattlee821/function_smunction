@@ -5,6 +5,8 @@
 #' Convert to wide: `data <- as.data.frame(pivot_wider(data, names_from = group, values_from = beta))`
 #' @param data your data frame
 #' @export
+#' @importFrom dplyr case_when
+#' @importFrom plyr mutate
 directional_consistency <- function(data) {
 
   # make col1 rownames
