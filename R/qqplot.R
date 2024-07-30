@@ -6,8 +6,10 @@
 #' @param point_colour the colour of the points - defaults to black
 #' @param point_alpha the alpha/transparency of the points - defaults to 0.8
 #' @param title a ggtitle placed top left of the plot
-#' @importFrom stats ppoints qbeta
 #' @export
+#' @importFrom stats ppoints qbeta
+#' @importFrom ggplot2 ggplot aes geom_point geom_abline geom_line ggtitle xlab ylab theme element_text
+#' @importFrom cowplot theme_cowplot
 qqplot <- function(df,
                       ci = 0.95,
                       point_size = 2,

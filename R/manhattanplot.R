@@ -36,9 +36,10 @@
 #' @return A manhattan plot.
 #'
 #' @keywords visualization manhattan
+#' @export
 #' @importFrom graphics abline axis par points
 #' @importFrom stats quantile
-#' @export
+#' @importFrom calibrate textxy
 manhattan <- function(df,
                       chr,
                       bp,

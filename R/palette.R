@@ -3,6 +3,8 @@
 #' @description assign palette to use palettes <- palette()
 #' @returns returns a list of three colour palettes: 2 discrete and 1 continous
 #' @export
+#' @importFrom wesanderson wes_palette
+#' @importFrom grDevices colorRampPalette
 palette <- function() {
   palette_discrete1 <- wesanderson::wes_palette(name = "Royal1")
   palette_discrete2 <- wesanderson::wes_palette(name = "Darjeeling1")
