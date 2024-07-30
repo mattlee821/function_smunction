@@ -9,13 +9,16 @@
 #' @param threads Number of threads to use (=1)
 #' @param out temporary output file
 #'
-#' @importFrom rlang .data
-#'
 #' @export
 #' @return data frame
+#' @importFrom rlang .data
+#' @importFrom utils write.table
+#' @importFrom data.table fread
+#' @importFrom gwasvcf check_plink
+#' @importFrom dplyr as_tibble filter mutate arrange desc
 get_ld_proxies <- function(rsid, bfile, searchspace=NULL, tag_kb=5000, tag_nsnp=5000, tag_r2=0.6, threads=1, out=tempfile())
 {
-  stopifnot(check_plink())
+  stopifnot(gwasvcf::check_plink())
   searchspacename <- paste0(out, ".searchspace")
   targetsname <- paste0(out, ".targets")
   outname <- paste0(out, ".targets.ld.gz")
