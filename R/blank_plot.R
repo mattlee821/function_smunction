@@ -8,6 +8,10 @@
 #' @export
 blank_plot <- function(message)
 {
+  # package conditionality
+  if (!requireNamespace("ggplot2", quietly = TRUE)) {
+    stop("Package 'ggplot2' needed for this function to work. Please install it.", call. = FALSE)
+  }
   ggplot2::ggplot(data.frame(a=0,b=0,n=message)) +
     ggplot2::geom_text(ggplot2::aes(x=a,y=b,label=n)) +
     ggplot2::labs(x=NULL,y=NULL) +
