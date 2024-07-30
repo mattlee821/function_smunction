@@ -18,6 +18,8 @@
 #' }
 #'
 #' @export
+#' @importFrom rmarkdown render
+#' @importFrom here here
 imputation_test <- function(data, output_dir, subtitle) {
   rmarkdown::render(input = paste0(system.file(package = "functions"), "/rmd/imputation_test.qmd"),
                     output_format = "html_document",
@@ -47,6 +49,8 @@ imputation_test <- function(data, output_dir, subtitle) {
 #' }
 #'
 #' @export
+#' @importFrom rmarkdown render
+#' @importFrom here here
 imputation_test_package <- function(rmd_location, data, output_dir, subtitle) {
   rmd_file <- here::here(rmd_location)
 
