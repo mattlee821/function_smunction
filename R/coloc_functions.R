@@ -13,6 +13,11 @@
 #' @param suppress_messages Logical, whether to suppress messages (default is FALSE).
 #' @return List of prior matrix, posterior matrix, and a pass/fail indicator (returned invisibly).
 #' @export
+#' @import cowplot
+#' @import ggplot2
+#' @import data.table
+#' @importFrom forcats fct_recode
+#' @importFrom tidyr pivot_longer
 coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", trait2_title = "trait 2",
                               dataset1 = NULL, dataset2 = NULL,
                               npoints = 100, suppress_messages = FALSE,
@@ -261,6 +266,8 @@ coloc_prior.adjust <- function(summ, newp12, p1 = 1e-4, p2 = 1e-4, p12 = 1e-6) {
 #' @param position Chromosome positions or SNP numbers.
 #'
 #' @export
+#' @import ggplot2
+#' @import cowplot
 coloc_manh.plot <- function(df, wh,
                             position = if ("position" %in% names(df)) {
                               df$position
@@ -305,6 +312,9 @@ coloc_manh.plot <- function(df, wh,
 #' @return Mean of values greater than zero, indicating alignment quality.
 #'
 #' @export
+#' @import ggplot2
+#' @import cowplot
+#' @import coloc
 coloc_check_alignment <- function(D, thr = 0.2, do_plot = TRUE) {
   coloc::check_dataset(D)
   bprod <- outer(D$beta / sqrt(D$varbeta), D$beta / sqrt(D$varbeta), "*")
@@ -329,25 +339,28 @@ coloc_check_alignment <- function(D, thr = 0.2, do_plot = TRUE) {
   return(mean(tmp > 0))
 }
 
-##' @title plot a coloc dataset
-##' @param d a coloc dataset
-##' @param label title
-##' @param susie_obj optional, the output of a call to runsusie()
-##' @param highlight_list optional, a list of character vectors. any snp in the
-##'   character vector will be highlighted, using a different colour for each
-##'   list.
-##' @param alty default is to plot a standard manhattan. If you wish to plot a
-##'   different y value, pass it here. You may also want to change ylab to
-##'   describe what you are plotting.
-##' @param ylab label for y axis, default is -log10(p) and assumes you are
-##'   plotting a manhattan
-##' @param show_legend optional, show the legend or not. default is TRUE
-##' @param color optional, specify the colours to use for each credible set when
-##'   susie_obj is supplied. Default is shamelessly copied from
-##'   susieR::susie_plot() so that colours will match
-##' @param ... other arguments passed to the base graphics plot() function
-##' @author Chris Wallace
-##' @export
+#' @title plot a coloc dataset
+#' @param d a coloc dataset
+#' @param label title
+#' @param susie_obj optional, the output of a call to runsusie()
+#' @param highlight_list optional, a list of character vectors. any snp in the
+#'   character vector will be highlighted, using a different colour for each
+#'   list.
+#' @param alty default is to plot a standard manhattan. If you wish to plot a
+#'   different y value, pass it here. You may also want to change ylab to
+#'   describe what you are plotting.
+#' @param ylab label for y axis, default is -log10(p) and assumes you are
+#'   plotting a manhattan
+#' @param show_legend optional, show the legend or not. default is TRUE
+#' @param color optional, specify the colours to use for each credible set when
+#'   susie_obj is supplied. Default is shamelessly copied from
+#'   susieR::susie_plot() so that colours will match
+#' @param ... other arguments passed to the base graphics plot() function
+#' @author Chris Wallace
+#' @export
+#' @import ggplot2
+#' @import cowplot
+#' @import susieR
 coloc_plot_dataset <- function(d, label = "distribution", susie_obj = NULL, highlight_list = NULL, alty = NULL,
                                ylab = "-log10(p)", show_legend = TRUE,
                                color = c("dodgerblue2", "green4", "#6A3D9A", "#FF7F00",
@@ -371,7 +384,7 @@ coloc_plot_dataset <- function(d, label = "distribution", susie_obj = NULL, high
 
   # Calculate y values
   if (is.null(alty)) {
-    df$y <- -(pnorm(-abs(df$beta) / sqrt(df$varbeta), log.p = TRUE) + log(2)) / log(10)
+    df$y <- -(stats::pnorm(-abs(df$beta) / sqrt(df$varbeta), log.p = TRUE) + log(2)) / log(10)
   } else {
     df$y <- alty
   }
