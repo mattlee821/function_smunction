@@ -1,0 +1,24 @@
+﻿sex,step,group,alc_type,alc_cat,alc_label,alc_cat_n,cases,participants, py ,studies,loghr,se,pwald,ptrend,phet_study,phet_sex,group_label
+,,,,,,,,,,,,,,,,,Women
+women30,overall,2,Categories,<0.1,<0.1 g/day,1,1827,493326,,,-0.03659,0.03575,,,,,
+women30,overall,2,,0.1-<5,0.1-<5 g/day,2,1789,532108,,,0,0.00000001,,,,,
+women30,overall,2,,5-<15,5-<15 g/day,3,899,319586,,,-0.09237,0.04204,,,,,
+women30,overall,2,,15-<30,15-<30 g/day,4,440,132667,,,0.09738,0.05469,,,,,
+women30,overall,2,,30+,30+ g/day,5,263,70024,,,0.11272,0.0676,0.002,,,,
+women30,overall,2,Continuous,10 g/day increase,10 g/day increase,99,5218,1547711,,26,0.02933,0.01241,,0.018,0.287,,
+,,,,,,,,,,,,,,,,,Men
+men,overall,3,Categories,<0.1,<0.1 g/day,1,1218,233223,,,0.09172,0.04314,,,,,
+men,overall,3,,0.1-<5,0.1-<5 g/day,2,1173,230800,,,0,0.00000001,,,,,
+men,overall,3,,5-<15,5-<15 g/day,3,936,187453,,,-0.02612,0.04465,,,,,
+men,overall,3,,15-<30,15-<30 g/day,4,718,135924,,,0.00324,0.04853,,,,,
+men,overall,3,,30-<60,30+ g/day,5,576,95415,,,0.12764,0.05297,,,,,
+men,overall,3,,60+,60+ g/day,6,329,46252,,,0.29165,0.06462,0.00001,,,,
+men,overall,3,Continuous,10 g/day increase,10 g/day increase,99,4950,929067,,20,0.02799,0.00636,,0.00001,0.653,,
+,,,,,,,,,,,,,,,,,Overall
+overall,overall,4,Categories,<0.1,<0.1 g/day,1,3045,726549,,,0.0135,0.02749,,,,,
+overall,overall,4,,0.1-<5,0.1-<5 g/day,2,2962,762908,,,0,0.00000001,,,,,
+overall,overall,4,,5-<15,5-<15 g/day,3,1835,507039,,,-0.0633,0.03047,,,,,
+overall,overall,4,,15-<30,15-<30 g/day,4,1158,268591,,,0.02724,0.03595,,,,,
+overall,overall,4,,30-<60,30+ g/day,5,792,155070,,,0.10027,0.04187,,,,,
+overall,overall,4,,60+,60+ g/day,6,376,56621,,,0.26134,0.05715,0.00001,,,,
+overall,overall,4,Continuous,10 g/day increase,10 g/day increase,99,10168,2476778,,32,0.02586,0.00562,,0.00001,0.466,0.275,
