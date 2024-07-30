@@ -58,6 +58,9 @@
 #' @importFrom rlang := !! enquo quo_is_null
 #' @importFrom grDevices axisTicks
 #' @importFrom scales trans_breaks
+#' @importFrom ggplot2 ggplot aes scale_x_continuous scale_shape_manual labs coord_cartesian ylim geom_vline guide_legend
+#' @importFrom ggforestplot theme_forest scale_colour_ng_d scale_fill_ng_d geom_stripes geom_effect
+#' @importFrom ggstance position_dodgev
 
 forestplot <- function (df, name = name, estimate = estimate, se = se, pvalue = NULL,
                            colour = NULL, shape = NULL, logodds = FALSE, psignif = 0.05,
