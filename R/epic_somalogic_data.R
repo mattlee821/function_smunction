@@ -36,7 +36,7 @@ epic_somalogic_format_data <- function(df) {
 #' 'ID_col', and creates a list of sex-specific and subtype dataframes
 #' for each 'ID_col' group. 'ID_col' is the filename (e.g., cancer-transformed.txt)
 #'
-#' @param data A dataframe containing the Epic SomaLogic data.
+#' @param df A dataframe containing the Epic SomaLogic data.
 #' @return A list of dataframes with sex-specific and subtype data.
 #'
 #' @export
@@ -89,13 +89,13 @@ epic_somalogic_create_subtypes <- function(df) {
   ))
 }
 
-#' `epic_somalogic_create_sex_specific_dataframes()`: create sex-specific dataframes for a given 'ID_col' group for Epic SomaLogic data
+#' `epic_somalogic_create_sex()`: create sex-specific dataframes for a given 'ID_col' group for Epic SomaLogic data
 #' @description
 #' This function takes a subset of data for a specific 'ID_col' group and creates
 #' sex-specific dataframes - sex-combined, male, and female.  Must use `lapply(list_data, epic_somalogic_create_sex)`
 #' if you want to run this over a list of dataframes.
 #'
-#' @param data_group A subset of the original dataframe for a specific 'ID_col' group.
+#' @param df A df with column "sex"
 #' @return A list containing sex-specific dataframes.
 #'
 #' @export
@@ -112,7 +112,7 @@ epic_somalogic_create_sex <- function(df) {
 #' It filters out cases where the age at event is less than the age plus follow-up years,
 #' and then creates different subsets of the data based on disease status and cohort membership.
 #'
-#' @param data A data frame containing the EPIC somalogic data
+#' @param df A data frame containing the EPIC somalogic data
 #' @param followup_years The number of follow-up years used for weighting
 #' @return A processed data frame with Prentice weighting applied
 epic_somalogic_prentice_weighting <- function(df, followup_years) {
@@ -812,7 +812,9 @@ epic_somalogic_analysis_heterogeneity <- function(list_processed) {
 #' @param file_path The file path where results and plots will be saved.
 #' @return NULL
 #' @export
-#'
+#' @import clusterProfiler
+#' @import ggplot2
+#' @import dplyr
 enrichment_analysis <- function(data, sig_direction, group_across, group_within,
                                 universe_geneinfo, database,
                                 minGSSize, maxGSSize, pvalueCutoff, qvalueCutoff, file_path) {
@@ -843,7 +845,7 @@ enrichment_analysis <- function(data, sig_direction, group_across, group_within,
       select(all_of(group_within), ID, pvalue) %>%
       mutate(`log10(p-adjust)` = -log10(pvalue)) %>%
       select(-pvalue) %>%
-      spread(all_of(group_within), `log10(p-adjust)`, fill = 0) %>%
+      tidyr::pivot_wider(names_from = all_of(group_within), values_from = `log10(p-adjust)`, values_fill = list(`log10(p-adjust)` = 0)) %>%
       column_to_rownames("ID")
 
     order <- results_enricher_wide_sig %>%

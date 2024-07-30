@@ -4,10 +4,10 @@
 \alias{epic_somalogic_prentice_weighting}
 \title{\code{epic_somalogic_prentice_weighting()}: Prentice weighting function for EPIC somalogic analysis}
 \usage{
-epic_somalogic_prentice_weighting(data, followup_years)
+epic_somalogic_prentice_weighting(df, followup_years)
 }
 \arguments{
-\item{data}{A data frame containing the EPIC somalogic data}
+\item{df}{A data frame containing the EPIC somalogic data}
 
 \item{followup_years}{The number of follow-up years used for weighting}
 }

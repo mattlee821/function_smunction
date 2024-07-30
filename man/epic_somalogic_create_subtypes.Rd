@@ -4,10 +4,10 @@
 \alias{epic_somalogic_create_subtypes}
 \title{\code{epic_somalogic_create_subtypes()}: Create a list of dataframes with sex-specific and subtype data for Epic SomaLogic data.}
 \usage{
-epic_somalogic_create_subtypes(data)
+epic_somalogic_create_subtypes(df)
 }
 \arguments{
-\item{data}{A dataframe containing the Epic SomaLogic data.}
+\item{df}{A dataframe containing the Epic SomaLogic data.}
 }
 \value{
 A list of dataframes with sex-specific and subtype data.

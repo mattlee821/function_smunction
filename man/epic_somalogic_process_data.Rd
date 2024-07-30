@@ -2,20 +2,18 @@
 % Please edit documentation in R/epic_somalogic_data.R
 \name{epic_somalogic_process_data}
 \alias{epic_somalogic_process_data}
-\title{\code{epic_somalogic_process_data()}: process EPIC somalogic data for analysis}
+\title{\code{epic_somalogic_process_data()}: creates nested raw and complete dataframes}
 \usage{
 epic_somalogic_process_data(list_df)
 }
 \arguments{
-\item{list_df}{A nested list containing EPIC somalogic data frames}
+\item{list_df}{A nested list containing EPIC-SOMALOGIC dataframes.}
 }
 \value{
-A processed nested list of EPIC somalogic data frames for analysis
+A nested list of processed EPIC-SOMALOGIC dataframes with calculated follow-up time,
+converted categorical variables, and reordered factor levels.
 }
 \description{
-This function preprocesses EPIC somalogic data for analysis by applying
-Prentice weighting using \code{epic_somalogic_process_data()} and converting
-missing values to -9 using \code{epic_somalogic_process_data_complete()}. This
-creates two data frames within your nested lists, \code{data_raw} and \code{data_complete.}
-\code{data_raw} is the raw data, while \code{data_complete} has -9 values for NA
+the function applies \code{epic_somalogic_create_datacomplete()} to a nested list and creates
+a nested list of raw and complete data frames
 }
