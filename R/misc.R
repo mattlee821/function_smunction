@@ -13,6 +13,11 @@
 #' - \code{haven::read_sas} for reading SAS files.
 #'
 #' @export
+#' @importFrom data.table fread
+#' @importFrom readstata13 read.dta13
+#' @importFrom readxl read_xlsx
+#' @importFrom haven read_sas
+#' @importFrom tools file_ext
 read_file <- function(file_path) {
   # Get the file extension
   file_extension <- tools::file_ext(file_path)
