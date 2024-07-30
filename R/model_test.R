@@ -9,7 +9,6 @@
 #' @param match_ID name of the column with your case/control match ID
 #' @param model name of the model you want to run: "lm" = stats::lm(); "clogit" = survival::clogit()
 #' @returns an object from AICcmodavg::aictab()
-#' @importFrom stats as.formula
 #' @examples
 #' model_test(data = mtcars,
 #'            exposure = "hp",
@@ -17,6 +16,10 @@
 #'            covariates = c("cyl", "disp", "drat", "wt", "qsec", "vs", "am", "gear", "carb"),
 #'            model = "lm")
 #' @export
+#' @importFrom stats as.formula lm
+#' @importFrom utils combn
+#' @importFrom survival clogit
+#' @importFrom AICcmodavg aictab
 model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, model) {
 
   # lm() linear model ====
