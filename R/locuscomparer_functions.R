@@ -2,13 +2,16 @@
 #' This function creates and merges data frames from exposure and outcome data,
 #' adds labels, and joins linkage disequilibrium (LD) data.
 #'
-#' @import dplyr
-#' @import reshape2
 #' @param data_coloc_exposure (data.frame) Data frame containing exposure data with columns `snp`, `pval`, `position`, and `LD`.
 #' @param data_coloc_outcome (data.frame) Data frame containing outcome data with columns `snp` and `pval`.
 #' @param SNP_causal_exposure (string) The causal SNP identifier for the exposure data.
 #' @return A merged data frame ready for locus comparison plotting.
 #' @export
+#' @import dplyr
+#' @import reshape2
+#' @importFrom dplyr left_join filter
+#' @importFrom reshape2 melt
+#' @importFrom locuscomparer assign_color
 locuscomparer_make_df <- function(data_coloc_exposure, data_coloc_outcome, SNP_causal_exposure) {
   # Create data frames
   df1 <- data.frame(
@@ -65,6 +68,7 @@ locuscomparer_make_df <- function(data_coloc_exposure, data_coloc_outcome, SNP_c
 #' @return (data.frame) The input data frame with an additional column `label` that contains the rsIDs
 #' of the specified SNPs and empty strings for others.
 #' @export
+#' @importFrom dplyr if_else
 locuscomparer_add_label <- function(df, snp) {
   df$label <- ifelse(df$rsid %in% snp, df$rsid, '')
   return(df)
@@ -74,8 +78,6 @@ locuscomparer_add_label <- function(df, snp) {
 #'
 #' This function creates a combined plot with two LocusZoom plots and a LocusCompare plot. Each LocusZoom plot represents an association study.
 #'
-#' @import ggplot2
-#' @import cowplot
 #' @param data_coloc_exposure (data.frame) Data frame containing the exposure data with the following columns:
 #' \itemize{
 #'   \item \code{snp} (character) - SNP rsID.
@@ -94,6 +96,8 @@ locuscomparer_add_label <- function(df, snp) {
 #' @param trait2_title (character) The title for the second trait (outcome). Default is "outcome".
 #' @return (ggplot) Combined plot of the two LocusZoom plots and the LocusCompare plot.
 #' @export
+#' @import ggplot2
+#' @import cowplot
 locuscomparer_make_plot <- function(data_coloc_exposure, data_coloc_outcome, SNP_causal_exposure, trait1_title = "exposure", trait2_title = "outcome") {
 
   # make data
@@ -153,6 +157,8 @@ locuscomparer_make_plot <- function(data_coloc_exposure, data_coloc_outcome, SNP
 #'
 #' @return (ggplot) A combined plot with a LocusCompare plot and two LocusZoom plots, or a list of the three individual plots if `combine` is set to FALSE.
 #' @export
+#' @import ggplot2
+#' @import cowplot
 locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trait2_title = "outcome",
                                              ld, colour = colour, shape = shape, size = size,
                                              snp = NULL,
@@ -185,8 +191,6 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
 #'
 #' This function generates a scatter plot comparing the -log10(p-values) of two different traits. The plot includes points representing SNPs, with customizable aesthetics such as color, shape, and size based on the SNPs. Additionally, it can display a legend with configurable position.
 #'
-#' @import ggplot2
-#' @import cowplot
 #'
 #' @param df (data.frame) A data frame containing the following columns:
 #' \itemize{
@@ -211,6 +215,9 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
 #'
 #' @return A \code{ggplot} object representing the scatter plot comparing two traits.
 #' @export
+#' @import ggplot2
+#' @import cowplot
+#' @importFrom ggrepel geom_text_repel
 locuscomparer_make_scatterplot = function (df,
                                            trait1_title,
                                            trait2_title,
@@ -265,9 +272,6 @@ locuscomparer_make_scatterplot = function (df,
 #'
 #' This function generates a LocusZoom-style plot, which visualizes the association between SNPs and a trait along a chromosome. The plot displays SNP positions and their significance (-log10(p-values)), with customizable aesthetics for different SNPs. For more details on LocusZoom plots, see \url{http://locuszoom.org/}.
 #'
-#' @import ggplot2
-#' @import cowplot
-#'
 #' @param df (data.frame) A data frame with the following columns:
 #' \itemize{
 #'   \item \code{pos} (numeric) - Position of the SNP on the chromosome.
@@ -297,6 +301,9 @@ locuscomparer_make_scatterplot = function (df,
 #'
 #' @return A \code{ggplot} object representing the LocusZoom plot showing the SNP positions and their -log10(p-values) for the trait.
 #' @export
+#' @import ggplot2
+#' @import cowplot
+#' @importFrom ggrepel geom_text_repel
 locuscomparer_make_locuszoom <- function(df, ylab = "-log10(p)", trait_title = "exposure", colour, shape, size) {
 
   # Define minimum and maximum position for the x-axis
