@@ -19,10 +19,10 @@
 #' @param transformation_method A string specifying the method to use for transformation. Options are \code{"InvRank"}, \code{"Log10"}, \code{"Log10Capped"}, and \code{"Log10ExclExtremes"}.
 #' @param outlier A logical flag to indicate if outlier exclusion should be performed across features and samples. Default is \code{FALSE}.
 #' @param plate_correction A logical flag to indicate if plate correction should be performed. Default is \code{FALSE}.
-#' @param cols_listRandom A string or vector specifying columns to be treated as random effects in plate correction. For example, \code{"batch_plate"}.
-#' @param cols_listFixedToKeep A vector specifying columns to be treated as fixed effects in plate correction and kept in the model. For example, \code{c("Center", "Country")}.
-#' @param cols_listFixedToRemove A vector specifying columns to be treated as fixed effects in plate correction and removed from the model.
-#' @param col_HeteroSked A string specifying the column to be used for heteroskedasticity correction.
+#' @param cols_listRandom A string or vector specifying columns in \code{data_meta_samples} to be treated as random effects in plate correction. For example, \code{"batch_plate"}.
+#' @param cols_listFixedToKeep A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and kept in the model. For example, \code{c("Center", "Country")}.
+#' @param cols_listFixedToRemove NOT IMPLEMENTED YET: A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and removed from the model.
+#' @param col_HeteroSked A string specifying the column in \code{data_meta_samples} to be used for heteroskedasticity correction.
 #' @param case_control A logical flag to indicate if the data are case-control and matched samples should be handled accordingly. Default is \code{FALSE}.
 #' @param col_case_control A string specifying the column name in \code{data_meta_samples} that contains case-control matching information. For example, \code{"Match_Caseset"}.
 #'
