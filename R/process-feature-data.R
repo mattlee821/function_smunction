@@ -319,19 +319,19 @@ process_data <- function(
     # step 4: exclusion ====
     ## save figure
     cat("saving outlier plots \n")
-    # tiff(paste0(path_outliers, "plot-outliers_", LABEL, ".tiff"), width = 1000, height = 1000, units = "px")
-    # print(cowplot::plot_grid(
-    #   GGally::ggmatrix_gtable(plot_samples),
-    #   GGally::ggmatrix_gtable(plot_features),
-    #   nrow = 2))
-    # dev.off()
+    tiff(paste0(path_outliers, "plot-outliers_", LABEL, ".tiff"), width = 1000, height = 1000, units = "px")
+    print(cowplot::plot_grid(
+      GGally::ggmatrix_gtable(plot_samples),
+      GGally::ggmatrix_gtable(plot_features),
+      nrow = 2))
+    dev.off()
     ## make exclusions
     if(length(outliers_samples) > 0) {df <- df[-outliers_samples, ]}
     if(length(outliers_features) > 0) {df <- df[, -outliers_features]}
     ## save excluded IDs
     cat("saving outlier info \n")
     id_outliers <- list(features_extreme = id_features, features_lof = id_features_exclude, samples_lof = id_samples_exclude)
-    # saveRDS(object = id_outliers, file = paste0(path_outliers, "id-outliers_", LABEL, ".rds"))
+    saveRDS(object = id_outliers, file = paste0(path_outliers, "id-outliers_", LABEL, ".rds"))
   }
 
   # case-control data ====
