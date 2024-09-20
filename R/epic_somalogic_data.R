@@ -18,8 +18,8 @@
 epic_somalogic_format_data <- function(df) {
   df$followup <- df$ageevent - df$age
   df <- df %>%
-    mutate(cvd_t2d_coh = ifelse(cvd_t2d_coh == "No", 0, 1)) %>%
-    mutate(age_group = as.integer(factor(cut(age,
+    dplyr::mutate(cvd_t2d_coh = ifelse(cvd_t2d_coh == "No", 0, 1)) %>%
+    dplyr::mutate(age_group = as.integer(factor(cut(age,
                                              breaks = seq(0, max(age) + 5, by = 5),
                                              right = FALSE,
                                              labels = seq(0, max(age), by = 5)))))  # Update labels
@@ -47,7 +47,7 @@ epic_somalogic_create_subtypes <- function(df) {
   data_cancer$indevent <- 1
   data_control <- subset(df, cncr_mal_clrt == 0)
   data_control$indevent <- 0
-  data_overall <- bind_rows(data_cancer, data_control)
+  data_overall <- dplyr::bind_rows(data_cancer, data_control)
   data_overall <- droplevels(data_overall)
 
   # Subset for subtypes - Colon
@@ -55,7 +55,7 @@ epic_somalogic_create_subtypes <- function(df) {
   data_cancer_colon$indevent <- 1
   data_control_colon <- subset(df, cncr_mal_clrt_colon == 0)
   data_control_colon$indevent <- 0
-  data_colon <- bind_rows(data_cancer_colon, data_control_colon)
+  data_colon <- dplyr::bind_rows(data_cancer_colon, data_control_colon)
   data_colon <- droplevels(data_colon)
 
   # Subset for subtypes - Rectum
@@ -63,15 +63,15 @@ epic_somalogic_create_subtypes <- function(df) {
   data_cancer_rectum$indevent <- 1
   data_control_rectum <- subset(df, cncr_mal_clrt_rectum == 0)
   data_control_rectum$indevent <- 0
-  data_rectum <- bind_rows(data_cancer_rectum, data_control_rectum)
+  data_rectum <- dplyr::bind_rows(data_cancer_rectum, data_control_rectum)
   data_rectum <- droplevels(data_rectum)
 
   # Subset for subtypes - Early Onset
   data_cancer_eo <- subset(data_cancer, ageevent < 55)
   data_control_eo <- subset(data_control, age < 55)
   data_control_eo <- data_control_eo %>%
-    mutate(ageevent = ifelse(ageevent > 55, 55, ageevent))
-  data_eo <- bind_rows(data_cancer_eo, data_control_eo)
+    dplyr::mutate(ageevent = ifelse(ageevent > 55, 55, ageevent))
+  data_eo <- dplyr::bind_rows(data_cancer_eo, data_control_eo)
   data_eo <- droplevels(data_eo)
 
   # Update the 'ID' column
@@ -116,13 +116,19 @@ epic_somalogic_create_sex <- function(df) {
 #' @param followup_years The number of follow-up years used for weighting
 #' @return A processed data frame with Prentice weighting applied
 epic_somalogic_prentice_weighting <- function(df, followup_years) {
-  df <- df %>% filter(ageevent > age + followup_years) %>% mutate(age = age + followup_years)
+  df <- df %>%
+    dplyr::filter(ageevent > age + followup_years) %>%
+    dplyr::mutate(age = age + followup_years)
   cat("* N samples before Prentice weighting (follow-up:", followup_years, "years):", nrow(df), "\n")
-  CasesOutsideSubCohort <- df %>% filter(cvd_t2d_coh == 0 & indevent == 1) %>% mutate(age = ageevent - 1e-4)
-  CasesInSubcohort <- df %>% filter(cvd_t2d_coh == 1 & indevent == 1)
-  ControlsSubcohort <- df %>% filter(cvd_t2d_coh == 1 & indevent == 0)
-  cat("* N samples after Prentice weighting (follow-up:", followup_years, "years):", nrow(bind_rows(CasesOutsideSubCohort, ControlsSubcohort, ControlsSubcohort)), "\n")
-  df <- bind_rows(CasesOutsideSubCohort, CasesInSubcohort, ControlsSubcohort)
+  CasesOutsideSubCohort <- df %>%
+    dplyr::filter(cvd_t2d_coh == 0 & indevent == 1) %>%
+    dplyr::mutate(age = ageevent - 1e-4)
+  CasesInSubcohort <- df %>%
+    dplyr::filter(cvd_t2d_coh == 1 & indevent == 1)
+  ControlsSubcohort <- df %>%
+    dplyr::filter(cvd_t2d_coh == 1 & indevent == 0)
+  cat("* N samples after Prentice weighting (follow-up:", followup_years, "years):", nrow(dplyr::bind_rows(CasesOutsideSubCohort, ControlsSubcohort, ControlsSubcohort)), "\n")
+  df <- dplyr::bind_rows(CasesOutsideSubCohort, CasesInSubcohort, ControlsSubcohort)
   return(df)
 }
 
@@ -292,7 +298,7 @@ epic_somalogic_exclusions <- function(list_data, exclusions) {
           # Check if the current data frame is in the exclusion sublist
           if (current_df_name %in% current_sublist_name) {
             # Convert to data.table
-            dt <- as.data.table(list_data[[i]][[k]])
+            dt <- data.table::as.data.table(list_data[[i]][[k]])
 
             # 1. Print the name of the dataframe
             cat("# Processing:", current_list_name, "/", current_sublist_name, "/", "\n")
@@ -812,59 +818,56 @@ epic_somalogic_analysis_heterogeneity <- function(list_processed) {
 #' @param file_path The file path where results and plots will be saved.
 #' @return NULL
 #' @export
-#' @import clusterProfiler
-#' @import ggplot2
-#' @import dplyr
 enrichment_analysis <- function(data, sig_direction, group_across, group_within,
                                 universe_geneinfo, database,
                                 minGSSize, maxGSSize, pvalueCutoff, qvalueCutoff, file_path) {
   for (i in unique(data[[group_across]])) {
     # Run enrichment analysis using the enricher function
     results_enricher <- data %>%
-      filter(.data[[group_across]] == i) %>%
-      group_by(.data[[group_within]]) %>%
-      do({
+      dplyr::filter(.data[[group_across]] == i) %>%
+      dplyr::group_by(.data[[group_within]]) %>%
+      dplyr::do({
         dat <- .
-        pull(dat, gene) %>%
-          enricher(universe = universe_geneinfo,
+        dplyr::pull(dat, gene) %>%
+          clusterProfiler::enricher(universe = universe_geneinfo,
                    TERM2GENE = database,
                    minGSSize = minGSSize,
                    maxGSSize = maxGSSize,
                    pvalueCutoff = pvalueCutoff,
                    qvalueCutoff = qvalueCutoff) %>%
-          as_tibble()
+          tibble::as_tibble()
       })
 
     # Write results to file
-    write.table(results_enricher, file = paste0(file_path, "results_", sig_direction, "_across-", i, "_within-", group_within, ".txt"),
+    utils::write.table(results_enricher, file = paste0(file_path, "results_", sig_direction, "_across-", i, "_within-", group_within, ".txt"),
                 row.names = FALSE, col.names = TRUE, quote = FALSE, sep = "\t")
 
     # Process and store the results
     results_enricher_wide_sig <- results_enricher %>%
-      filter(pvalue < 0.05) %>%
-      select(all_of(group_within), ID, pvalue) %>%
-      mutate(`log10(p-adjust)` = -log10(pvalue)) %>%
-      select(-pvalue) %>%
-      tidyr::pivot_wider(names_from = all_of(group_within), values_from = `log10(p-adjust)`, values_fill = list(`log10(p-adjust)` = 0)) %>%
-      column_to_rownames("ID")
+      dplyr::filter(pvalue < 0.05) %>%
+      dplyr::select(tidyselect::all_of(group_within), ID, pvalue) %>%
+      dplyr::mutate(`log10(p-adjust)` = -log10(pvalue)) %>%
+      dplyr::select(-pvalue) %>%
+      tidyr::pivot_wider(names_from = tidyselect::all_of(group_within), values_from = `log10(p-adjust)`, values_fill = list(`log10(p-adjust)` = 0)) %>%
+      tibble::column_to_rownames("ID")
 
     order <- results_enricher_wide_sig %>%
-      dist(method = "euclidean") %>%
-      hclust(method = "ward.D2") %>%
+      stats::dist(method = "euclidean") %>%
+      stats::hclust(method = "ward.D2") %>%
       with(labels[order])
 
     # Generate bubble heatmap and store it in the results list
     plot_i <- results_enricher %>%
-      filter(pvalue < 0.05) %>%
-      mutate(Term = factor(ID, levels = order),
-             Cancer = factor(all_of(group_within))) %>%
-      ggplot(aes(Term, Cancer, size = Count, color = -log10(pvalue))) +
-      coord_flip() +
-      geom_point() +
-      scale_color_gradient(low = "grey", high = "red") +
-      theme_bw() +
-      theme(axis.text.y = element_text(size = 8),
-            axis.text.x = element_text(size = 8,
+      dplyr::filter(pvalue < 0.05) %>%
+      dplyr::mutate(Term = factor(ID, levels = order),
+             Cancer = factor(tidyselect::all_of(group_within))) %>%
+      ggplot2::ggplot(ggplot2::aes(Term, Cancer, size = Count, color = -log10(pvalue))) +
+      ggplot2::coord_flip() +
+      ggplot2::geom_point() +
+      ggplot2::scale_color_gradient(low = "grey", high = "red") +
+      ggplot2::theme_bw() +
+      ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8),
+            axis.text.x = ggplot2::element_text(size = 8,
                                        angle = 90,
                                        vjust = 0.5,
                                        hjust = 1))

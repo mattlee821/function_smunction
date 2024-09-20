@@ -9,7 +9,7 @@
 #' additional columns, e.g. the corresponding p-values (see parameter \code{pvalue})
 #' in which case, in conjuction with the threshold given in \code{psignif}, the
 #' non-significant results will be displayed as hollow points. Other variables
-#' may be used as aesthetics to define the colour and the shape of the points
+#' may be used as ggplot2::aesthetics to define the colour and the shape of the points
 #' to be plotted.
 #' @param name the variable in \code{df} that contains the y-axis
 #' names. This argument is automatically \link[rlang:quotation]{quoted} and
@@ -54,26 +54,18 @@
 #' introduction to non-standard evaluation.
 #' @author Maria Kalimeri, Ilari Scheinin, Vilma Jagerroos
 #' @export
-#' @importFrom stats qnorm
-#' @importFrom rlang := !! enquo quo_is_null
-#' @importFrom grDevices axisTicks
-#' @importFrom scales trans_breaks
-#' @importFrom ggplot2 ggplot aes scale_x_continuous scale_shape_manual labs coord_cartesian ylim geom_vline guide_legend
-#' @importFrom ggforestplot theme_forest scale_colour_ng_d scale_fill_ng_d geom_stripes geom_effect
-#' @importFrom ggstance position_dodgev
-
 forestplot <- function (df, name = name, estimate = estimate, se = se, pvalue = NULL,
                            colour = NULL, shape = NULL, logodds = FALSE, psignif = 0.05,
                            ci = 0.95, ...)
 {
   stopifnot(is.data.frame(df))
   stopifnot(is.logical(logodds))
-  name <- enquo(name)
-  estimate <- enquo(estimate)
-  se <- enquo(se)
-  pvalue <- enquo(pvalue)
-  colour <- enquo(colour)
-  shape <- enquo(shape)
+  name <- rlang::enquo(name)
+  estimate <- rlang::enquo(estimate)
+  se <- rlang::enquo(se)
+  pvalue <- rlang::enquo(pvalue)
+  colour <- rlang::enquo(colour)
+  shape <- rlang::enquo(shape)
   args <- list(...)
   const <- stats::qnorm(1 - (1 - ci)/2)
   df <- df %>% dplyr::mutate(`:=`(!!name, factor(!!name, levels = !!name %>%
@@ -84,10 +76,10 @@ forestplot <- function (df, name = name, estimate = estimate, se = se, pvalue = 
     df <- df %>% dplyr::mutate(.xmin = exp(.data$.xmin), .xmax = exp(.data$.xmax),
                         `:=`(!!estimate, exp(!!estimate)))
   }
-  if (!quo_is_null(pvalue)) {
+  if (!rlang::quo_is_null(pvalue)) {
     df <- df %>% dplyr::mutate(.filled = !!pvalue < !!psignif)
   }
-  g <- ggplot2::ggplot(df, aes(x = !!estimate, y = !!name))
+  g <- ggplot2::ggplot(df, ggplot2::aes(x = !!estimate, y = !!name))
   if (logodds) {
     if ("xtickbreaks" %in% names(args)) {
       g <- g + ggplot2::scale_x_continuous(trans = "log10", breaks = args$xtickbreaks)
@@ -103,10 +95,10 @@ forestplot <- function (df, name = name, estimate = estimate, se = se, pvalue = 
     ggforestplot::geom_stripes() +
     ggplot2::geom_vline(xintercept = ifelse(test = logodds, yes = 1, no = 0), linetype = "solid", size = 0.4, colour = "black")
   g <- g +
-    ggforestplot::geom_effect(aes(xmin = .data$.xmin, xmax = .data$.xmax, colour = !!colour, shape = !!shape, filled = .data$.filled),
+    ggforestplot::geom_effect(ggplot2::aes(xmin = .data$.xmin, xmax = .data$.xmax, colour = !!colour, shape = !!shape, filled = .data$.filled),
                        position = ggstance::position_dodgev(height = 0.9)) +
     ggplot2::scale_shape_manual(values = c(21L, 22L, 23L, 24L, 25L)) +
-    ggplot2::guides(colour = guide_legend(reverse = TRUE), shape = guide_legend(reverse = TRUE))
+    ggplot2::guides(colour = ggplot2::guide_legend(reverse = TRUE), shape = ggplot2::guide_legend(reverse = TRUE))
   if ("title" %in% names(args)) {
     g <- g + ggplot2::labs(title = args$title)
   }
@@ -143,7 +135,7 @@ forestplot <- function (df, name = name, estimate = estimate, se = se, pvalue = 
 #' the corresponding standard errors (see parameter \code{se}). It may contain
 #' additional columns, e.g., the corresponding p-values (see parameter \code{pvalue}),
 #' in conjunction with the threshold given in \code{psignif}; non-significant results
-#' will be displayed as hollow points. Other variables may be used as aesthetics to define
+#' will be displayed as hollow points. Other variables may be used as ggplot2::aesthetics to define
 #' the colour and the shape of the points to be plotted.
 #' @param name The variable in \code{df} that contains the y-axis
 #' names. This argument is automatically \link[rlang:quotation]{quoted} and
@@ -182,12 +174,6 @@ forestplot <- function (df, name = name, estimate = estimate, se = se, pvalue = 
 #' @note See \code{vignette(programming, package = "dplyr")} for an
 #' introduction to non-standard evaluation.
 #' @export
-#' @importFrom stats qnorm
-#' @importFrom rlang := !! enquo quo_is_null
-#' @importFrom ggplot2 ggplot aes scale_x_continuous scale_shape_manual labs coord_cartesian ylim geom_vline guide_legend
-#' @importFrom ggforestplot theme_forest scale_colour_ng_d scale_fill_ng_d geom_stripes geom_effect
-#' @importFrom ggstance position_dodgev
-
 forestplot_label <- function(df, name, estimate, se, pvalue = NULL,
                              label_column = NULL, label_width = 1, colour = NULL, shape = NULL,
                              logodds = FALSE, psignif = 0.05,
@@ -196,13 +182,13 @@ forestplot_label <- function(df, name, estimate, se, pvalue = NULL,
   stopifnot(is.data.frame(df))
   stopifnot(is.logical(logodds))
 
-  name <- enquo(name)
-  estimate <- enquo(estimate)
-  se <- enquo(se)
-  pvalue <- enquo(pvalue)
-  label_column <- enquo(label_column)  # Capture label_column as a quosure
-  colour <- enquo(colour)
-  shape <- enquo(shape)
+  name <- rlang::enquo(name)
+  estimate <- rlang::enquo(estimate)
+  se <- rlang::enquo(se)
+  pvalue <- rlang::enquo(pvalue)
+  label_column <- rlang::enquo(label_column)  # Capture label_column as a quosure
+  colour <- rlang::enquo(colour)
+  shape <- rlang::enquo(shape)
 
   args <- list(...)
   const <- stats::qnorm(1 - (1 - ci) / 2)
@@ -222,12 +208,12 @@ forestplot_label <- function(df, name, estimate, se, pvalue = NULL,
                     !!estimate := exp(!!estimate))
   }
 
-  if (!quo_is_null(pvalue)) {
+  if (!rlang::quo_is_null(pvalue)) {
     df <- df %>%
       dplyr::mutate(.filled = !!pvalue < !!psignif)
   }
 
-  g <- ggplot2::ggplot(df, aes(x = !!estimate, y = !!name))
+  g <- ggplot2::ggplot(df, ggplot2::aes(x = !!estimate, y = !!name))
 
   if (logodds) {
     if ("xtickbreaks" %in% names(args)) {
@@ -243,11 +229,11 @@ forestplot_label <- function(df, name, estimate, se, pvalue = NULL,
     ggforestplot::scale_fill_ng_d() +
     ggforestplot::geom_stripes() +
     ggplot2::geom_vline(xintercept = ifelse(test = logodds, yes = 1, no = 0), linetype = "solid", size = 0.4, colour = "black") +
-    ggforestplot::geom_effect(aes(xmin = .data$.xmin, xmax = .data$.xmax,
+    ggforestplot::geom_effect(ggplot2::aes(xmin = .data$.xmin, xmax = .data$.xmax,
                                   colour = !!colour, shape = !!shape, filled = .data$.filled),
                               position = ggstance::position_dodgev(height = 0.9)) +
     ggplot2::scale_shape_manual(values = c(21L, 22L, 23L, 24L, 25L)) +
-    ggplot2::guides(colour = guide_legend(reverse = TRUE), shape = guide_legend(reverse = TRUE))
+    ggplot2::guides(colour = ggplot2::guide_legend(reverse = TRUE), shape = ggplot2::guide_legend(reverse = TRUE))
 
   if ("title" %in% names(args)) {
     g <- g + ggplot2::labs(title = args$title)
@@ -278,9 +264,9 @@ forestplot_label <- function(df, name, estimate, se, pvalue = NULL,
   }
 
   # Create a separate plot for the labels if label_column is provided
-  if (!quo_is_null(label_column)) {
+  if (!rlang::quo_is_null(label_column)) {
     # Extract y.range from the forest plot
-    y_range <- ggplot_build(g)$layout$panel_params[[1]]$y.range
+    y_range <- ggplot2::ggplot_build(g)$layout$panel_params[[1]]$y.range
     # Calculate the number of exposures
     num_exposures <- nrow(df)
     # Calculate the y positions based on the y.range and the number of exposures
@@ -292,19 +278,19 @@ forestplot_label <- function(df, name, estimate, se, pvalue = NULL,
     max_label_width <- stringr::str_width(longest_label)
 
     # make plot
-    label_plot <- ggplot(data = df) +
-      geom_text(
-        aes(x = 0, y = y_positions, label = !!label_column),  # Use calculated y positions
+    label_plot <- ggplot2::ggplot(data = df) +
+      ggplot2::geom_text(
+        ggplot2::aes(x = 0, y = y_positions, label = !!label_column),  # Use calculated y positions
         hjust = 0,  # Align text to the left
         vjust = 2   # Align text to y-axis center (not exactly but close enough)
       ) +
-      scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +  # Set limits based on max label width
-      coord_cartesian(xlim = c(0, 0.1),
+      ggplot2::scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +  # Set limits based on max label width
+      ggplot2::coord_cartesian(xlim = c(0, 0.1),
                       ylim = y_range) +  # Keep the y-axis limits
-      theme_void() +  # Remove axes and background
-      theme(
-        plot.margin = margin(0, 0, 0, 0),  # Remove margins
-        axis.text.y = element_blank()  # Remove y-axis text for alignment
+      ggplot2::theme_void() +  # Remove axes and background
+      ggplot2::theme(
+        plot.margin = ggplot2::margin(0, 0, 0, 0),  # Remove margins
+        axis.text.y = ggplot2::element_blank()  # Remove y-axis text for alignment
       )
 
     # Combine the forest plot and label plot

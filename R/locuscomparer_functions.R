@@ -7,11 +7,6 @@
 #' @param SNP_causal_exposure (string) The causal SNP identifier for the exposure data.
 #' @return A merged data frame ready for locus comparison plotting.
 #' @export
-#' @import dplyr
-#' @import reshape2
-#' @importFrom dplyr left_join filter
-#' @importFrom reshape2 melt
-#' @importFrom locuscomparer assign_color
 locuscomparer_make_df <- function(data_coloc_exposure, data_coloc_outcome, SNP_causal_exposure) {
   # Create data frames
   df1 <- data.frame(
@@ -68,7 +63,6 @@ locuscomparer_make_df <- function(data_coloc_exposure, data_coloc_outcome, SNP_c
 #' @return (data.frame) The input data frame with an additional column `label` that contains the rsIDs
 #' of the specified SNPs and empty strings for others.
 #' @export
-#' @importFrom dplyr if_else
 locuscomparer_add_label <- function(df, snp) {
   df$label <- ifelse(df$rsid %in% snp, df$rsid, '')
   return(df)
@@ -96,8 +90,6 @@ locuscomparer_add_label <- function(df, snp) {
 #' @param trait2_title (character) The title for the second trait (outcome). Default is "outcome".
 #' @return (ggplot) Combined plot of the two LocusZoom plots and the LocusCompare plot.
 #' @export
-#' @import ggplot2
-#' @import cowplot
 locuscomparer_make_plot <- function(data_coloc_exposure, data_coloc_outcome, SNP_causal_exposure, trait1_title = "exposure", trait2_title = "outcome") {
 
   # make data
@@ -157,8 +149,6 @@ locuscomparer_make_plot <- function(data_coloc_exposure, data_coloc_outcome, SNP
 #'
 #' @return (ggplot) A combined plot with a LocusCompare plot and two LocusZoom plots, or a list of the three individual plots if `combine` is set to FALSE.
 #' @export
-#' @import ggplot2
-#' @import cowplot
 locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trait2_title = "outcome",
                                              ld, colour = colour, shape = shape, size = size,
                                              snp = NULL,
@@ -177,7 +167,7 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
   p3 <- locuscomparer_make_locuszoom(df = df2, trait_title = trait2_title, colour = colour, shape = shape, size = size)
 
   if (combine) {
-    p2 = p2 + theme(axis.text.x = element_blank(), axis.title.x = element_blank())
+    p2 = p2 + ggplot2::theme(axis.text.x = ggplot2::element_blank(), axis.title.x = ggplot2::element_blank())
     p4 = cowplot::plot_grid(p2, p3, align = "v", nrow = 2, rel_heights=c(0.8,1))
     p5 = cowplot::plot_grid(p1, p4)
     return(p5)
@@ -189,7 +179,7 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
 
 #' Create a Scatter Plot Comparing Two Traits
 #'
-#' This function generates a scatter plot comparing the -log10(p-values) of two different traits. The plot includes points representing SNPs, with customizable aesthetics such as color, shape, and size based on the SNPs. Additionally, it can display a legend with configurable position.
+#' This function generates a scatter plot comparing the -log10(p-values) of two different traits. The plot includes points representing SNPs, with customizable ggplot2::aesthetics such as color, shape, and size based on the SNPs. Additionally, it can display a legend with configurable position.
 #'
 #'
 #' @param df (data.frame) A data frame containing the following columns:
@@ -198,7 +188,7 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
 #'   \item \code{logp2} (numeric) - -log10(p-value) for the second trait.
 #'   \item \code{rsid} (character) - SNP rsID.
 #'   \item \code{label} (character) - Optional label for SNPs, used for annotation.
-#'   \item Additional columns for plotting aesthetics: `colour`, `shape`, `size` can be specified for different SNPs.
+#'   \item Additional columns for plotting ggplot2::aesthetics: `colour`, `shape`, `size` can be specified for different SNPs.
 #' }
 #' The `logp1` and `logp2` columns represent the transformed p-values for the two traits being compared.
 #'
@@ -215,9 +205,6 @@ locuscomparer_make_combined_plot = function (df, trait1_title = "exposure", trai
 #'
 #' @return A \code{ggplot} object representing the scatter plot comparing two traits.
 #' @export
-#' @import ggplot2
-#' @import cowplot
-#' @importFrom ggrepel geom_text_repel
 locuscomparer_make_scatterplot = function (df,
                                            trait1_title,
                                            trait2_title,
@@ -227,21 +214,21 @@ locuscomparer_make_scatterplot = function (df,
   x_max <- max(df$logp1, na.rm = TRUE) * 1.1
   y_max <- max(df$logp2, na.rm = TRUE) * 1.1
 
-  p <- ggplot(df, aes(logp1, logp2)) +
-    geom_point(aes(fill = rsid, size = rsid, shape = rsid),
+  p <- ggplot2::ggplot(df, ggplot2::aes(logp1, logp2)) +
+    ggplot2::geom_point(ggplot2::aes(fill = rsid, size = rsid, shape = rsid),
                alpha = 0.8) +
-    geom_point(data = df[df$label != "",],
-               aes(x = logp1, y = logp2,
+    ggplot2::geom_point(data = df[df$label != "",],
+               ggplot2::aes(x = logp1, y = logp2,
                    fill = rsid, size = rsid, shape = rsid)) +
-    xlab(bquote(.(trait1_title) ~ -log[10] * '(P)')) +
-    ylab(bquote(.(trait2_title) ~ -log[10] * '(P)')) +
-    scale_fill_manual(values = colour, guide = "none") +
-    scale_shape_manual(values = shape, guide = "none") +
-    scale_size_manual(values = size, guide = "none") +
-    ggrepel::geom_text_repel(aes(label = label)) +
-    scale_x_continuous(limits = c(0, x_max)) +
-    scale_y_continuous(limits = c(0, y_max)) +
-    theme_classic()
+    ggplot2::xlab(bquote(.(trait1_title) ~ -log[10] * '(P)')) +
+    ggplot2::ylab(bquote(.(trait2_title) ~ -log[10] * '(P)')) +
+    ggplot2::scale_fill_manual(values = colour, guide = "none") +
+    ggplot2::scale_shape_manual(values = shape, guide = "none") +
+    ggplot2::scale_size_manual(values = size, guide = "none") +
+    ggrepel::geom_text_repel(ggplot2::aes(label = label)) +
+    ggplot2::scale_x_continuous(limits = c(0, x_max)) +
+    ggplot2::scale_y_continuous(limits = c(0, y_max)) +
+    ggplot2::theme_classic()
 
   if (legend == TRUE) {
     legend_position = match.arg(legend_position)
@@ -254,8 +241,8 @@ locuscomparer_make_scatterplot = function (df,
     }
 
     p = cowplot::ggdraw(p) +
-      geom_rect(data = legend_box,
-                aes(xmin = x, xmax = x + 0.05, ymin = y, ymax = y + 0.05),
+      ggplot2::geom_rect(data = legend_box,
+                ggplot2::aes(xmin = x, xmax = x + 0.05, ymin = y, ymax = y + 0.05),
                 color = "black",
                 fill = rev(c("blue4", "skyblue", "darkgreen", "orange", "red"))) +
       cowplot::draw_label("0.8", x = legend_box$x[1] + 0.05, y = legend_box$y[1], hjust = -0.3, size = 20) +
@@ -270,7 +257,7 @@ locuscomparer_make_scatterplot = function (df,
 
 #' Create a LocusZoom Plot for SNP Associations
 #'
-#' This function generates a LocusZoom-style plot, which visualizes the association between SNPs and a trait along a chromosome. The plot displays SNP positions and their significance (-log10(p-values)), with customizable aesthetics for different SNPs. For more details on LocusZoom plots, see \url{http://locuszoom.org/}.
+#' This function generates a LocusZoom-style plot, which visualizes the association between SNPs and a trait along a chromosome. The plot displays SNP positions and their significance (-log10(p-values)), with customizable ggplot2::aesthetics for different SNPs. For more details on LocusZoom plots, see \url{http://locuszoom.org/}.
 #'
 #' @param df (data.frame) A data frame with the following columns:
 #' \itemize{
@@ -278,7 +265,7 @@ locuscomparer_make_scatterplot = function (df,
 #'   \item \code{logp} (numeric) - -log10(p-value) for the SNP-trait association.
 #'   \item \code{rsid} (character) - SNP rsID.
 #'   \item \code{label} (character) - Optional label for SNPs, used for annotation. Only SNPs with non-empty labels will be annotated.
-#'   \item Additional columns for aesthetics, such as `colour`, `shape`, `size` that map to `rsid` values for visualization.
+#'   \item Additional columns for ggplot2::aesthetics, such as `colour`, `shape`, `size` that map to `rsid` values for visualization.
 #' }
 #' Example data frame:
 #' \preformatted{
@@ -301,9 +288,6 @@ locuscomparer_make_scatterplot = function (df,
 #'
 #' @return A \code{ggplot} object representing the LocusZoom plot showing the SNP positions and their -log10(p-values) for the trait.
 #' @export
-#' @import ggplot2
-#' @import cowplot
-#' @importFrom ggrepel geom_text_repel
 locuscomparer_make_locuszoom <- function(df, ylab = "-log10(p)", trait_title = "exposure", colour, shape, size) {
 
   # Define minimum and maximum position for the x-axis
@@ -311,26 +295,26 @@ locuscomparer_make_locuszoom <- function(df, ylab = "-log10(p)", trait_title = "
   x_max <- max(df$pos)
 
   # Create ggplot object
-  p <- ggplot(df, aes(x = pos, y = logp)) +
-    geom_point(aes(fill = rsid, size = rsid, shape = rsid), alpha = 0.8) +
-    geom_point(data = df[df$label != '', ],
-               aes(x = pos, y = logp, fill = rsid, size = rsid, shape = rsid)) +
-    scale_fill_manual(values = colour, guide = 'none') +
-    scale_shape_manual(values = shape, guide = 'none') +
-    scale_size_manual(values = size, guide = 'none') +
-    scale_x_continuous(
+  p <- ggplot2::ggplot(df, ggplot2::aes(x = pos, y = logp)) +
+    ggplot2::geom_point(ggplot2::aes(fill = rsid, size = rsid, shape = rsid), alpha = 0.8) +
+    ggplot2::geom_point(data = df[df$label != '', ],
+               ggplot2::aes(x = pos, y = logp, fill = rsid, size = rsid, shape = rsid)) +
+    ggplot2::scale_fill_manual(values = colour, guide = 'none') +
+    ggplot2::scale_shape_manual(values = shape, guide = 'none') +
+    ggplot2::scale_size_manual(values = size, guide = 'none') +
+    ggplot2::scale_x_continuous(
       breaks = c(x_min, x_max),  # Set breaks to min and max values
       name = "Position",
       limits = c(x_min, x_max)  # Ensure limits include the data range
     ) +
-    ggrepel::geom_text_repel(aes(label = label), max.overlaps = Inf) +
-    labs(x = "Position", y = ylab, title = trait_title) +
-    theme_classic() +
-    theme(
-      plot.margin = unit(c(0.5, 1, 0.5, 0.5), "lines"),
-      axis.text.x = element_text(size = 12),  # Adjust text size for x-axis labels
-      axis.title.x = element_text(size = 14, face = "bold"),  # Adjust size and style for x-axis title
-      axis.title.y = element_text(size = 14, face = "bold")  # Adjust size and style for y-axis title
+    ggrepel::geom_text_repel(ggplot2::aes(label = label), max.overlaps = Inf) +
+    ggplot2::labs(x = "Position", y = ggplot2::ylab, title = trait_title) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(
+      plot.margin = grid::unit(c(0.5, 1, 0.5, 0.5), "lines"),
+      axis.text.x = ggplot2::element_text(size = 12),  # Adjust text size for x-axis labels
+      axis.title.x = ggplot2::element_text(size = 14, face = "bold"),  # Adjust size and style for x-axis title
+      axis.title.y = ggplot2::element_text(size = 14, face = "bold")  # Adjust size and style for y-axis title
     )
 
   return(p)

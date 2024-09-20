@@ -37,9 +37,6 @@
 #'
 #' @keywords visualization manhattan
 #' @export
-#' @importFrom graphics abline axis par points
-#' @importFrom stats quantile
-#' @importFrom calibrate textxy
 manhattan <- function(df,
                       chr,
                       bp,
@@ -105,8 +102,8 @@ manhattan <- function(df,
         d[d$index == i, "pos"] = d[d$index == i,"BP"] + lastbase    # replace line 129
       }
     }
-    ticks <-tapply(d$pos,d$index,quantile,probs=0.5)   # replace line 135
-    xlabel = 'Chromosome'
+    ticks <- tapply(d$pos,d$index, stats::quantile,probs=0.5)   # replace line 135
+    xlabel <- 'Chromosome'
     labs <- unique(d$CHR)
   }
 
@@ -139,9 +136,9 @@ manhattan <- function(df,
 
   # Add an axis.
   if (nchr==1) { #If single chromosome, ticks and labels automatic.
-    axis(1, ...)
+    graphics::axis(1, ...)
   } else { # if multiple chrs, use the ticks and labels you created above.
-    axis(1, at=ticks, labels=labs, ...)
+    graphics::axis(1, at=ticks, labels=labs, ...)
   }
 
   # Create a vector of alternatiting colors
@@ -150,20 +147,20 @@ manhattan <- function(df,
 
   # Add points to the plot
   if (nchr==1) {
-    with(d, points(pos, logp, pch=20, col=col[1], ...))
+    with(d, graphics::points(pos, logp, pch=20, col=col[1], ...))
   } else {
     # if multiple chromosomes, need to alternate colors and increase the color index (icol) each chr.
     icol=1
     for (i in unique(d$index)) {
       #with(d[d$index==unique(d$index)[i], ], points(pos, logp, col=col[icol], pch=20, ...))
-      points(d[d$index==i,"pos"], d[d$index==i,"logp"], col=col[icol], pch=20, ...)
+      graphics::points(d[d$index==i,"pos"], d[d$index==i,"logp"], col=col[icol], pch=20, ...)
       icol=icol+1
     }
   }
 
   # Add suggestive and genomewide lines
-  if (suggestiveline) abline(h=suggestiveline, col = genomewideline_col)
-  if (genomewideline) abline(h=genomewideline, col = suggestiveline_col)
+  if (suggestiveline) graphics::abline(h=suggestiveline, col = genomewideline_col)
+  if (genomewideline) graphics::abline(h=genomewideline, col = suggestiveline_col)
 
   # Highlight snps from a character vector
   if (!is.null(highlight)) {
@@ -179,7 +176,7 @@ manhattan <- function(df,
       topHits = subset(d, P <= annotatePval)
     } else
       topHits = subset(d, P >= annotatePval)
-    par(xpd = TRUE)
+    graphics::par(xpd = TRUE)
     # annotate these SNPs
     if (annotateTop == FALSE) {
       if (logp) {
@@ -206,6 +203,6 @@ manhattan <- function(df,
         calibrate::textxy(topSNPs$pos, topSNPs$P, offset = 0.625, labs = topSNPs$SNP, cex = 0.5, ...)
     }
   }
-  par(xpd = FALSE)
+  graphics::par(xpd = FALSE)
 }
 

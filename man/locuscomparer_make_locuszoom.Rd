@@ -20,7 +20,7 @@ locuscomparer_make_locuszoom(
 \item \code{logp} (numeric) - -log10(p-value) for the SNP-trait association.
 \item \code{rsid} (character) - SNP rsID.
 \item \code{label} (character) - Optional label for SNPs, used for annotation. Only SNPs with non-empty labels will be annotated.
-\item Additional columns for aesthetics, such as \code{colour}, \code{shape}, \code{size} that map to \code{rsid} values for visualization.
+\item Additional columns for ggplot2::aesthetics, such as \code{colour}, \code{shape}, \code{size} that map to \code{rsid} values for visualization.
 }
 Example data frame:
 \preformatted{
@@ -49,5 +49,5 @@ Example: \code{c("rs1" = 2, "rs2" = 3, "rs3" = 4)}.}
 A \code{ggplot} object representing the LocusZoom plot showing the SNP positions and their -log10(p-values) for the trait.
 }
 \description{
-This function generates a LocusZoom-style plot, which visualizes the association between SNPs and a trait along a chromosome. The plot displays SNP positions and their significance (-log10(p-values)), with customizable aesthetics for different SNPs. For more details on LocusZoom plots, see \url{http://locuszoom.org/}.
+This function generates a LocusZoom-style plot, which visualizes the association between SNPs and a trait along a chromosome. The plot displays SNP positions and their significance (-log10(p-values)), with customizable ggplot2::aesthetics for different SNPs. For more details on LocusZoom plots, see \url{http://locuszoom.org/}.
 }

@@ -65,13 +65,13 @@ process_data(
 
 \item{plate_correction}{A logical flag to indicate if plate correction should be performed. Default is \code{FALSE}.}
 
-\item{cols_listRandom}{A string or vector specifying columns to be treated as random effects in plate correction. For example, \code{"batch_plate"}.}
+\item{cols_listRandom}{A string or vector specifying columns in \code{data_meta_samples} to be treated as random effects in plate correction. For example, \code{"batch_plate"}.}
 
-\item{cols_listFixedToKeep}{A vector specifying columns to be treated as fixed effects in plate correction and kept in the model. For example, \code{c("Center", "Country")}.}
+\item{cols_listFixedToKeep}{A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and kept in the model. For example, \code{c("Center", "Country")}.}
 
-\item{cols_listFixedToRemove}{A vector specifying columns to be treated as fixed effects in plate correction and removed from the model.}
+\item{cols_listFixedToRemove}{NOT IMPLEMENTED YET: A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and removed from the model.}
 
-\item{col_HeteroSked}{A string specifying the column to be used for heteroskedasticity correction.}
+\item{col_HeteroSked}{A string specifying the column in \code{data_meta_samples} to be used for heteroskedasticity correction.}
 
 \item{case_control}{A logical flag to indicate if the data are case-control and matched samples should be handled accordingly. Default is \code{FALSE}.}
 

@@ -16,10 +16,6 @@
 #'            covariates = c("cyl", "disp", "drat", "wt", "qsec", "vs", "am", "gear", "carb"),
 #'            model = "lm")
 #' @export
-#' @importFrom stats as.formula lm
-#' @importFrom utils combn
-#' @importFrom survival clogit
-#' @importFrom AICcmodavg aictab
 model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, model) {
 
   # lm() linear model ====
@@ -63,7 +59,7 @@ model_test <- function(data, exposure, outcome, covariates,  match_ID = NA, mode
 
     ## run models
     models <- lapply(formulas, function(frml) {
-      survival::clogit(as.formula(frml), data = data, method = "exact", na.action = "na.exclude")
+      survival::clogit(stats::as.formula(frml), data = data, method = "exact", na.action = "na.exclude")
     })
     names(models) <- formulas # rename models using formula
     raw_model <- survival::clogit(data[[outcome]] ~ data[[exposure]], data = data, method = "exact", na.action = "na.exclude")

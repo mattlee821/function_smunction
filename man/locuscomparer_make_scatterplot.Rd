@@ -22,7 +22,7 @@ locuscomparer_make_scatterplot(
 \item \code{logp2} (numeric) - -log10(p-value) for the second trait.
 \item \code{rsid} (character) - SNP rsID.
 \item \code{label} (character) - Optional label for SNPs, used for annotation.
-\item Additional columns for plotting aesthetics: \code{colour}, \code{shape}, \code{size} can be specified for different SNPs.
+\item Additional columns for plotting ggplot2::aesthetics: \code{colour}, \code{shape}, \code{size} can be specified for different SNPs.
 }
 The \code{logp1} and \code{logp2} columns represent the transformed p-values for the two traits being compared.}
 
@@ -47,5 +47,5 @@ Example: \code{c("rs1" = 2, "rs2" = 3, "rs3" = 4)}.}
 A \code{ggplot} object representing the scatter plot comparing two traits.
 }
 \description{
-This function generates a scatter plot comparing the -log10(p-values) of two different traits. The plot includes points representing SNPs, with customizable aesthetics such as color, shape, and size based on the SNPs. Additionally, it can display a legend with configurable position.
+This function generates a scatter plot comparing the -log10(p-values) of two different traits. The plot includes points representing SNPs, with customizable ggplot2::aesthetics such as color, shape, and size based on the SNPs. Additionally, it can display a legend with configurable position.
 }

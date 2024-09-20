@@ -27,7 +27,7 @@ the corresponding standard errors (see parameter \code{se}). It may contain
 additional columns, e.g. the corresponding p-values (see parameter \code{pvalue})
 in which case, in conjuction with the threshold given in \code{psignif}, the
 non-significant results will be displayed as hollow points. Other variables
-may be used as aesthetics to define the colour and the shape of the points
+may be used as ggplot2::aesthetics to define the colour and the shape of the points
 to be plotted.}
 
 \item{name}{the variable in \code{df} that contains the y-axis

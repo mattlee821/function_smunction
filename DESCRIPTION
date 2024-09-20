@@ -11,7 +11,7 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
-  dplyr, forcats, ggplot2, tibble, tidyr, tidyverse,
+  dplyr, forcats, ggplot2, tibble, tidyr,
   plyr,
   magrittr,
   data.table,
@@ -20,12 +20,14 @@ Imports:
   stats,
   utils,
   rlang,
-  stringr,
+  graphics,
+  tidyselect
+Suggests:
+  stringr,tidyverse,
   AICcmodavg,coloc,susieR,ggstance,gwasvcf,genetics.binaRies,survival,TwoSampleMR,
   wesanderson,ggforestplot,scales,calibrate,cowplot,reshape2,ggrepel,locuscomparer,
   haven,readstata13,readxl,GGally,bigutilsr,impute,imputeLCMD,missForest,
   missMethods,pcaMethods,viridis,doParallel,lmtest,clusterProfiler,hglm,lme4,nlme
-Suggests:
 Remotes:
   NightingaleHealth/ggforestplot,
   MRCIEU/genetics.binaRies,

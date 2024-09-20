@@ -6,8 +6,6 @@
 #'
 #' @export
 #' @return List of plots
-#' @importFrom plyr dlply mutate
-#' @importFrom ggplot2 aes geom_point geom_vline geom_abline ggplot labs scale_colour_manual theme
 mr_funnel_plot <- function(singlesnp_results)
 {
   res <- plyr::dlply(singlesnp_results, c("id.exposure", "id.outcome"), function(d)
@@ -44,9 +42,6 @@ mr_funnel_plot <- function(singlesnp_results)
 #' @param dat Output from harmonise_data().
 #' @export
 #' @return List of plots
-#' @importFrom plyr dlply mutate
-#' @importFrom ggplot2 aes geom_errorbar geom_errorbarh geom_point ggplot geom_abline labs theme guides
-#' @importFrom TwoSampleMR mr_egger_regression mr_egger_regression_bootstrap default_parameters
 mr_scatter_plot <- function (mr_results, dat)
 {
   requireNamespace("ggplot2", quietly = TRUE)
@@ -64,11 +59,11 @@ mr_scatter_plot <- function (mr_results, dat)
                          mrres <- subset(mr_results, id.exposure == d$id.exposure[1] & id.outcome == d$id.outcome[1])
                          mrres$a <- 0
                          if ("MR Egger" %in% mrres$method) {
-                           temp <- mr_egger_regression(d$beta.exposure, d$beta.outcome, d$se.exposure, d$se.outcome, default_parameters())
+                           temp <- TwoSampleMR::mr_egger_regression(d$beta.exposure, d$beta.outcome, d$se.exposure, d$se.outcome, TwoSampleMR::default_parameters())
                            mrres$a[mrres$method == "MR Egger"] <- temp$b_i
                          }
                          if ("MR Egger (bootstrap)" %in% mrres$method) {
-                           temp <- mr_egger_regression_bootstrap(d$beta.exposure, d$beta.outcome, d$se.exposure, d$se.outcome, default_parameters())
+                           temp <- TwoSampleMR::mr_egger_regression_bootstrap(d$beta.exposure, d$beta.outcome, d$se.exposure, d$se.outcome, TwoSampleMR::default_parameters())
                            mrres$a[mrres$method == "MR Egger (bootstrap)"] <- temp$b_i
                          }
                          ggplot2::ggplot(data = d, ggplot2::aes(x = beta.exposure, y = beta.outcome)) +
@@ -91,8 +86,6 @@ mr_scatter_plot <- function (mr_results, dat)
 #'
 #' @export
 #' @return List of plots
-#' @importFrom plyr dlply mutate
-#' @importFrom ggplot2 aes geom_vline geom_errorbarh geom_point geom_hline ggplot scale_colour_manual scale_size_manual theme labs ggtitle
 mr_forest_plot <- function(singlesnp_results, exponentiate=FALSE)
 {
   res <- plyr::dlply(singlesnp_results, c("id.exposure", "id.outcome"), function(d)
@@ -157,8 +150,6 @@ mr_forest_plot <- function(singlesnp_results, exponentiate=FALSE)
 #'
 #' @export
 #' @return List of plots
-#' @importFrom plyr dlply mutate
-#' @importFrom ggplot2 aes geom_vline geom_errorbarh geom_point geom_hline ggplot scale_colour_manual scale_size_manual theme labs ggtitle
 mr_leaveoneout_plot <- function(leaveoneout_results)
 {
   res <- plyr::dlply(leaveoneout_results, c("id.exposure", "id.outcome"), function(d)
@@ -213,8 +204,6 @@ mr_leaveoneout_plot <- function(leaveoneout_results)
 #'
 #' @export
 #' @return List of plots
-#' @importFrom plyr dlply mutate
-#' @importFrom ggplot2 aes geom_vline geom_density geom_point ggplot scale_colour_brewer labs ggtitle
 mr_density_plot <- function(singlesnp_results, mr_results, exponentiate=FALSE, bandwidth="nrd0")
 {
   res <- plyr::dlply(singlesnp_results, c("id.exposure", "id.outcome"), function(d)

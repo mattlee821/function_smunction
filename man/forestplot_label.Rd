@@ -28,7 +28,7 @@ value) to display (see parameter \code{estimate}), and a numeric value with
 the corresponding standard errors (see parameter \code{se}). It may contain
 additional columns, e.g., the corresponding p-values (see parameter \code{pvalue}),
 in conjunction with the threshold given in \code{psignif}; non-significant results
-will be displayed as hollow points. Other variables may be used as aesthetics to define
+will be displayed as hollow points. Other variables may be used as ggplot2::aesthetics to define
 the colour and the shape of the points to be plotted.}
 
 \item{name}{The variable in \code{df} that contains the y-axis

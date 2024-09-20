@@ -13,11 +13,6 @@
 #' @param suppress_messages Logical, whether to suppress messages (default is FALSE).
 #' @return List of prior matrix, posterior matrix, and a pass/fail indicator (returned invisibly).
 #' @export
-#' @import cowplot
-#' @import ggplot2
-#' @import data.table
-#' @importFrom forcats fct_recode
-#' @importFrom tidyr pivot_longer
 coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", trait2_title = "trait 2",
                               dataset1 = NULL, dataset2 = NULL,
                               npoints = 100, suppress_messages = FALSE,
@@ -35,7 +30,7 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
   results <- obj$results
   ## multiple signals?
   multiple <- FALSE
-  if (is.data.table(obj$summary)) { # we're not in coloc.abf anymore
+  if (data.table::is.data.table(obj$summary)) { # we're not in coloc.abf anymore
     if (!(row %in% 1:nrow(obj$summary)))
       stop("row must be between 1 and ", nrow(obj$summary))
     pp <- unlist(c(obj$summary[row, grep("PP|nsnp", names(obj$summary)), with = FALSE]))
@@ -124,7 +119,7 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
         else c("m.PP.H0.abf", "m.PP.H1.abf", "m.PP.H2.abf", "m.PP.H3.abf", "m.PP.H4.abf"),
         names_to = "name", values_to = "value"
       ) %>%
-      mutate(name = forcats::fct_recode(name,
+      dplyr::mutate(name = forcats::fct_recode(name,
                                H0 = if (i == 1) "m.H0" else "m.PP.H0.abf",
                                H1 = if (i == 1) "m.H1" else "m.PP.H1.abf",
                                H2 = if (i == 1) "m.H2" else "m.PP.H2.abf",
@@ -133,21 +128,21 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
 
     # Check data
     df <- df %>%
-      filter(!is.na(testp12) & !is.na(value)) %>%
-      filter(testp12 >= 1e-8 & testp12 <= 1e-4)
+      dplyr::filter(!is.na(testp12) & !is.na(value)) %>%
+      dplyr::filter(testp12 >= 1e-8 & testp12 <= 1e-4)
     p12 <- ifelse(p12 >= 1e-8 & p12 <= 1e-4, p12, NA)
 
     # Initialize the plot
-    plot_probabilities[[i]] <- ggplot(df, aes(x = testp12, y = value, colour = name)) +
-      scale_x_log10(breaks = c(1e-8, 1e-7, 1e-6, 1e-5, 1e-4)) +
-      scale_y_continuous(breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
-      labs(x = "p12", y = "Prob",
+    plot_probabilities[[i]] <- ggplot2::ggplot(df, ggplot2::aes(x = testp12, y = value, colour = name)) +
+      ggplot2::scale_x_log10(breaks = c(1e-8, 1e-7, 1e-6, 1e-5, 1e-4)) +
+      ggplot2::scale_y_continuous(breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1)) +
+      ggplot2::labs(x = "p12", y = "Prob",
            title = ti[[i]],
            subtitle = paste("shaded region:", rule.init)) +
-      geom_vline(xintercept = p12, linetype = "dashed", color = "gray") +
-      annotate("text", x = p12, y = 0.5, label = "results", angle = 90, color = "gray40") +
+      ggplot2::geom_vline(xintercept = p12, linetype = "dashed", color = "gray") +
+      ggplot2::annotate("text", x = p12, y = 0.5, label = "results", angle = 90, color = "gray40") +
       cowplot::theme_cowplot() +
-      theme(legend.position = "right", legend.title = element_blank())
+      ggplot2::theme(legend.position = "right", legend.title = ggplot2::element_blank())
 
     # Add rectangle if pass condition is met
     if (any(df$pass)) {
@@ -156,13 +151,13 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
       xright <- max(df$testp12[df$pass])
 
       plot_probabilities[[i]] <- plot_probabilities[[i]] +
-        geom_rect(aes(xmin = xleft, xmax = xright, ymin = 0, ymax = 1),
+        ggplot2::geom_rect(ggplot2::aes(xmin = xleft, xmax = xright, ymin = 0, ymax = 1),
                   fill = "#E2FFBF", colour = NA, alpha = 0.005)
     }
 
     # Add the points on top of the rectangle
     plot_probabilities[[i]] <- plot_probabilities[[i]] +
-      geom_point()
+      ggplot2::geom_point()
   }
   # combined
   plot_probabilities <- cowplot::plot_grid(plot_probabilities[[1]],
@@ -266,8 +261,6 @@ coloc_prior.adjust <- function(summ, newp12, p1 = 1e-4, p2 = 1e-4, p12 = 1e-6) {
 #' @param position Chromosome positions or SNP numbers.
 #'
 #' @export
-#' @import ggplot2
-#' @import cowplot
 coloc_manh.plot <- function(df, wh,
                             position = if ("position" %in% names(df)) {
                               df$position
@@ -280,24 +273,24 @@ coloc_manh.plot <- function(df, wh,
   logp <- - (stats::pnorm(-abs(df[[znm]]), log.p = TRUE) + log(2)) / log(10)
 
   # Color palette for plotting
-  Pal <- colorRampPalette(c('white', 'blue'))
+  Pal <- grDevices::colorRampPalette(c('white', 'blue'))
   Col <- Pal(100)[ceiling(100 * df$SNP.PP.H4)]
 
   # Create ggplot object
-  p <- ggplot(data = df, aes(x = position, y = logp, fill = SNP.PP.H4)) +
-    geom_point(shape = 21, size = 3, color = "grey", aes(fill = SNP.PP.H4)) +
-    scale_fill_gradient(low = "white", high = "blue", limits = c(0, 1), breaks = seq(0, 1)) +
-    labs(x = if ("position" %in% names(df)) "position" else "SNP number",
+  p <- ggplot2::ggplot(data = df, ggplot2::aes(x = position, y = logp, fill = SNP.PP.H4)) +
+    ggplot2::geom_point(shape = 21, size = 3, color = "grey", ggplot2::aes(fill = SNP.PP.H4)) +
+    ggplot2::scale_fill_gradient(low = "white", high = "blue", limits = c(0, 1), breaks = seq(0, 1)) +
+    ggplot2::labs(x = if ("position" %in% names(df)) "position" else "SNP number",
          y = "-log10(p)",
          title = paste("Distribution / H4"),
          fill = "H4") +
-    scale_x_continuous(
+    ggplot2::scale_x_continuous(
       breaks = c(min(df$position), max(df$position)),  # Set breaks to min and max values
       labels = c(min(df$position), max(df$position))  # Set labels to min and max values
     ) +
     cowplot::theme_cowplot() +
-    theme(legend.position = "right",
-          legend.title = element_text(hjust = 0, vjust = 1))  # Center-align the legend title
+    ggplot2::theme(legend.position = "right",
+          legend.title = ggplot2::element_text(hjust = 0, vjust = 1))  # Center-align the legend title
   return(p)
 }
 
@@ -312,9 +305,6 @@ coloc_manh.plot <- function(df, wh,
 #' @return Mean of values greater than zero, indicating alignment quality.
 #'
 #' @export
-#' @import ggplot2
-#' @import cowplot
-#' @import coloc
 coloc_check_alignment <- function(D, thr = 0.2, do_plot = TRUE) {
   coloc::check_dataset(D)
   bprod <- outer(D$beta / sqrt(D$varbeta), D$beta / sqrt(D$varbeta), "*")
@@ -325,13 +315,13 @@ coloc_check_alignment <- function(D, thr = 0.2, do_plot = TRUE) {
     percent_positive <- 100 * mean(tmp > 0)
 
     # Create histogram with ggplot2
-    p <- ggplot(data = data.frame(tmp = tmp), aes(x = tmp)) +
-      geom_histogram(bins = 30, color = "black") +
-      labs(x = "Ratio: product of Z scores to LD",
+    p <- ggplot2::ggplot(data = data.frame(tmp = tmp), ggplot2::aes(x = tmp)) +
+      ggplot2::geom_histogram(bins = 30, color = "black") +
+      ggplot2::labs(x = "Ratio: product of Z scores to LD",
            caption = "most values should be positive;\n symmetry = potentially poor alignment",
            y = "Count",
            title = paste0("Alignment: ", round(percent_positive,2), "% positive")) +
-      geom_vline(xintercept = 0, color = "red") +
+      ggplot2::geom_vline(xintercept = 0, color = "red") +
       cowplot::theme_cowplot()
     return(p)
   }
@@ -358,9 +348,6 @@ coloc_check_alignment <- function(D, thr = 0.2, do_plot = TRUE) {
 #' @param ... other arguments passed to the base graphics plot() function
 #' @author Chris Wallace
 #' @export
-#' @import ggplot2
-#' @import cowplot
-#' @import susieR
 coloc_plot_dataset <- function(d, label = "distribution", susie_obj = NULL, highlight_list = NULL, alty = NULL,
                                ylab = "-log10(p)", show_legend = TRUE,
                                color = c("dodgerblue2", "green4", "#6A3D9A", "#FF7F00",
@@ -390,10 +377,10 @@ coloc_plot_dataset <- function(d, label = "distribution", susie_obj = NULL, high
   }
 
   # Create ggplot object
-  p <- ggplot(data = df, aes(x = position, y = y)) +
-    geom_point(shape = 21, size = 3, color = "white", fill = "grey") +
-    labs(x = "Position", y = ylab, title = label) +
-    scale_x_continuous(
+  p <- ggplot2::ggplot(data = df, ggplot2::aes(x = position, y = y)) +
+    ggplot2::geom_point(shape = 21, size = 3, color = "white", fill = "grey") +
+    ggplot2::labs(x = "Position", y = ylab, title = label) +
+    ggplot2::scale_x_continuous(
       breaks = c(min(df$position), max(df$position)),  # Set breaks to min and max values
       labels = c(min(df$position), max(df$position))  # Set labels to min and max values
     ) +
@@ -401,9 +388,9 @@ coloc_plot_dataset <- function(d, label = "distribution", susie_obj = NULL, high
   # Add highlight points if highlight_list is provided
   if (!is.null(highlight_list)) {
     p <- p +
-      geom_point(data = df[df$snp %in% unlist(highlight_list), ], aes(color = factor(snp))) +
-      scale_color_manual(values = color[1:length(highlight_list)]) +
-      guides(color = guide_legend(title = "Highlight", keywidth = 1, keyheight = 1))
+      ggplot2::geom_point(data = df[df$snp %in% unlist(highlight_list), ], ggplot2::aes(color = factor(snp))) +
+      ggplot2::scale_color_manual(values = color[1:length(highlight_list)]) +
+      ggplot2::guides(color = ggplot2::guide_legend(title = "Highlight", keywidth = 1, keyheight = 1))
   }
   return(p)
 }
