@@ -280,7 +280,7 @@ forestplot_label <- function(df, name, estimate, se, pvalue = NULL,
     # make plot
     label_plot <- ggplot2::ggplot(data = df) +
       ggplot2::geom_text(
-        ggplot2::aes(x = 0, y = y_positions, label = !!label_column),  # Use calculated y positions
+        ggplot2::aes(x = 0, y = y_positions, label = rev(!!label_column)),  # Use calculated y positions
         hjust = 0,  # Align text to the left
         vjust = 2   # Align text to y-axis center (not exactly but close enough)
       ) +
