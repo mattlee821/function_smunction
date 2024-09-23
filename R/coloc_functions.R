@@ -73,11 +73,11 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
 
   # plots ====
   # Data check plot ====
-  plot_distribution <- cowplot::plot_grid(
-    coloc_plot_dataset(d = data_check_trait1, label = trait1_title),
-    coloc_plot_dataset(d = data_check_trait2, label = trait2_title),
-    ncol = 1, nrow = 2
-  )
+  # plot_distribution <- cowplot::plot_grid(
+  #   coloc_plot_dataset(d = data_check_trait1, label = trait1_title),
+  #   coloc_plot_dataset(d = data_check_trait2, label = trait2_title),
+  #   ncol = 1, nrow = 2
+  # )
   plot_alignment <- cowplot::plot_grid(
     coloc_check_alignment(D = data_check_trait1),
     coloc_check_alignment(D = data_check_trait2),
@@ -166,17 +166,17 @@ coloc_sensitivity <- function(obj, rule = "H4 > 0.8", trait1_title = "trait 1", 
 
   # combined plot ====
   plot_row1 <- cowplot::plot_grid(
-    plot_distribution,  # A
+    # plot_distribution,  # A
     plot_alignment,     # B
     plot_manhattan,     # C
-    labels = c("A", "B", "C"),
-    ncol = 3,
-    rel_widths = c(1, 1, 1)
+    labels = c("A", "B"),
+    ncol = 2,
+    rel_widths = c(1, 1)
   )
   plot_row2 <- cowplot::plot_grid(
     plot_locuscompare,  # D
     plot_probabilities, # E
-    labels = c("D", "E"),
+    labels = c("C", "D"),
     ncol = 2,
     rel_widths = c(1.3, 0.7)
   )
