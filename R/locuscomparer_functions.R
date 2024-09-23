@@ -308,7 +308,7 @@ locuscomparer_make_locuszoom <- function(df, ylab = "-log10(p)", trait_title = "
       limits = c(x_min, x_max)  # Ensure limits include the data range
     ) +
     ggrepel::geom_text_repel(ggplot2::aes(label = label), max.overlaps = Inf) +
-    ggplot2::labs(x = "Position", y = ggplot2::ylab, title = trait_title) +
+    ggplot2::labs(x = "Position", y = ylab, title = trait_title) +
     ggplot2::theme_classic() +
     ggplot2::theme(
       plot.margin = grid::unit(c(0.5, 1, 0.5, 0.5), "lines"),
