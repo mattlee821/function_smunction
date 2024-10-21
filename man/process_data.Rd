@@ -2,7 +2,7 @@
 % Please edit documentation in R/process-feature-data.R
 \name{process_data}
 \alias{process_data}
-\title{Process and Normalize feature data}
+\title{Process feature data}
 \usage{
 process_data(
   data,
@@ -12,9 +12,12 @@ process_data(
   col_features,
   path_out,
   path_outliers,
-  exclusion_extreme = FALSE,
-  col_missing = NULL,
-  missing_pct = NULL,
+  exclusion_extreme_feature = FALSE,
+  col_missing_feature = NULL,
+  missing_pct_feature = NULL,
+  exclusion_extreme_sample = FALSE,
+  col_missing_sample = NULL,
+  missing_pct_sample = NULL,
   imputation = FALSE,
   imputation_method = NULL,
   col_LOD = NULL,
@@ -26,70 +29,85 @@ process_data(
   cols_listFixedToKeep = NULL,
   cols_listFixedToRemove = NULL,
   col_HeteroSked = NULL,
+  centre_scale = FALSE,
   case_control = FALSE,
   col_case_control = NULL
 )
 }
 \arguments{
-\item{data}{A data frame with col1 sample ID and remaining columns of features with feature IDs as colnames}
+\item{data}{A data frame with the first column as sample IDs and remaining columns containing feature values, where feature IDs are the column names.}
 
-\item{data_meta_features}{A data frame containing metadata for the features}
+\item{data_meta_features}{A data frame containing metadata for the features, including information such as limit of detection and missingness percentage.}
 
-\item{data_meta_samples}{A data frame containing metadata for the samples}
+\item{data_meta_samples}{A data frame containing metadata for the samples, including information necessary for plate correction and case-control analysis.}
 
-\item{col_samples}{A string specifying the column name in \code{data} that contains sample IDs. For example, \code{"Idepic_Bio"}.}
+\item{col_samples}{A string specifying the column name in \code{data} that contains sample IDs (e.g., \code{"Idepic_Bio"}).}
 
-\item{col_features}{A string specifying the column name in \code{data} that contains feature IDs (should be the same values as the colnames of \code{data}. For example, \code{"UNIPROT"}.}
+\item{col_features}{A string specifying the column name in \code{data} that contains feature IDs, which should match the column names of \code{data} (e.g., \code{"UNIPROT"}).}
 
-\item{path_out}{A string specifying the output directory where the processed data will be saved}
+\item{path_out}{A string specifying the output directory where the processed data will be saved.}
 
-\item{path_outliers}{A string specifying the output directory where outlier information will be saved}
+\item{path_outliers}{A string specifying the output directory where outlier information will be saved.}
 
-\item{exclusion_extreme}{A logical flag to indicate if features with extreme missingness should be excluded. Default is \code{FALSE}.}
+\item{exclusion_extreme_feature}{A logical flag indicating whether to exclude features with extreme missingness. Default is \code{FALSE}.}
 
-\item{col_missing}{A string specifying the column name in \code{data_meta_features} that contains the percentage of missing values for each feature. For example, \code{"missing_pct"}.}
+\item{col_missing_feature}{A string specifying the column name in \code{data_meta_features} that contains the percentage of missing values for each feature (e.g., \code{"missing_pct"}).}
 
-\item{missing_pct}{A numeric value specifying the threshold percentage for missingness above which features will be excluded. For example, \code{0.9}.}
+\item{missing_pct_feature}{A numeric value specifying the threshold percentage for missingness above which features will be excluded (e.g., \code{0.9}).}
 
-\item{imputation}{A logical flag to indicate if imputation should be performed. Default is \code{FALSE}.}
+\item{exclusion_extreme_sample}{A logical flag indicating whether to exclude samples with extreme missingness. Default is \code{FALSE}.}
 
-\item{imputation_method}{A string specifying the method to use for imputation. Options are \code{"LOD"}, \code{"1/5th"}, \code{"KNN"}, \code{"ppca"}, \code{"median"}, \code{"mean"}, \code{"rf"}, and \code{"left-censored"}.}
+\item{col_missing_sample}{A string specifying the column name in \code{data_meta_samples} that contains the percentage of missing values for each sample (e.g., \code{"missing_pct_samples"}).}
+
+\item{missing_pct_sample}{A numeric value specifying the threshold percentage for missingness above which samples will be excluded (e.g., \code{0.9}).}
+
+\item{imputation}{A logical flag indicating whether imputation should be performed. Default is \code{FALSE}.}
+
+\item{imputation_method}{A string specifying the method to use for imputation. Options include \code{"LOD"}, \code{"1/5th"}, \code{"KNN"}, \code{"ppca"}, \code{"median"}, \code{"mean"}, \code{"rf"}, and \code{"left-censored"}.}
 
 \item{col_LOD}{A string specifying the column name in \code{data_meta_features} that contains the limit of detection (LOD) values, required if \code{imputation_method} is \code{"LOD"}.}
 
-\item{transformation}{A logical flag to indicate if transformation should be performed. Default is \code{FALSE}.}
+\item{transformation}{A logical flag indicating whether transformation should be performed. Default is \code{FALSE}.}
 
-\item{transformation_method}{A string specifying the method to use for transformation. Options are \code{"InvRank"}, \code{"Log10"}, \code{"Log10Capped"}, and \code{"Log10ExclExtremes"}.}
+\item{transformation_method}{A string specifying the method to use for transformation. Options include \code{"InvRank"}, \code{"Log10"}, \code{"Log10Capped"}, and \code{"Log10ExclExtremes"}.}
 
-\item{outlier}{A logical flag to indicate if outlier exclusion should be performed across features and samples. Default is \code{FALSE}.}
+\item{outlier}{A logical flag indicating whether outlier exclusion should be performed across features and samples. Default is \code{FALSE}.}
 
-\item{plate_correction}{A logical flag to indicate if plate correction should be performed. Default is \code{FALSE}.}
+\item{plate_correction}{A logical flag indicating whether plate correction should be performed. Default is \code{FALSE}.}
 
-\item{cols_listRandom}{A string or vector specifying columns in \code{data_meta_samples} to be treated as random effects in plate correction. For example, \code{"batch_plate"}.}
+\item{cols_listRandom}{A string or vector specifying columns in \code{data_meta_samples} to be treated as random effects in plate correction (e.g., \code{"batch_plate"}).}
 
-\item{cols_listFixedToKeep}{A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and kept in the model. For example, \code{c("Center", "Country")}.}
+\item{cols_listFixedToKeep}{A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and retained in the model (e.g., \code{c("Center", "Country")}).}
 
-\item{cols_listFixedToRemove}{NOT IMPLEMENTED YET: A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and removed from the model.}
+\item{cols_listFixedToRemove}{A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and removed from the model. Default is \code{NULL}.}
 
 \item{col_HeteroSked}{A string specifying the column in \code{data_meta_samples} to be used for heteroskedasticity correction.}
 
-\item{case_control}{A logical flag to indicate if the data are case-control and matched samples should be handled accordingly. Default is \code{FALSE}.}
+\item{centre_scale}{A logical flag indicating whether to center and scale the data. Default is \code{FALSE}.}
 
-\item{col_case_control}{A string specifying the column name in \code{data_meta_samples} that contains case-control matching information. For example, \code{"Match_Caseset"}.}
+\item{case_control}{A logical flag indicating whether the data are case-control and if matched samples should be handled accordingly. Default is \code{FALSE}.}
+
+\item{col_case_control}{A string specifying the column name in \code{data_meta_samples} that contains case-control matching information (e.g., \code{"Match_Caseset"}).}
 }
 \value{
-The processed and normalized data is saved to the specified output directory.
+The processed data is returned and saved as a \code{.rds} file to the specified output directory.
 }
 \description{
-This function processes a given dataset with specified metadata features and samples. It supports exclusion of features with extreme missingness, various imputation methods, transformation, plate correction, and case-control data handling.
+This function processes feature data given specified metadata.
+It supports exclusion of features with extreme missingness,
+various imputation methods, transformation, plate correction, centering,
+and case-control data handling.
 }
 \details{
-This function performs several data processing steps:
+This function performs several data processing steps (in order):
 \itemize{
 \item Excludes features with extreme missingness based on a specified threshold.
+\item Excludes samples with extreme missingness based on a specified threshold.
 \item Imputes missing values using various methods.
 \item Transforms the data using specified methods.
-\item Corrects for plate effects using specified random and fixed effects.
+\item Excludes outlying samples and features using PCA and LOF.
 \item Handles case-control data to ensure matched samples are treated appropriately.
+\item Corrects for plate effects using specified random and fixed effects.
+\item Centers and scales the data if \code{centre_scale} is \code{TRUE}.
 }
 }

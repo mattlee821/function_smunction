@@ -1,43 +1,54 @@
-#' Process and Normalize feature data
+#' Process feature data
 #'
-#' This function processes a given dataset with specified metadata features and samples. It supports exclusion of features with extreme missingness, various imputation methods, transformation, plate correction, and case-control data handling.
+#' This function processes feature data given specified metadata.
+#' It supports exclusion of features with extreme missingness,
+#' various imputation methods, transformation, plate correction, centering,
+#' and case-control data handling.
 #'
-#' @param data A data frame with col1 sample ID and remaining columns of features with feature IDs as colnames
-#' @param data_meta_features A data frame containing metadata for the features
-#' @param data_meta_samples A data frame containing metadata for the samples
-#' @param col_samples A string specifying the column name in \code{data} that contains sample IDs. For example, \code{"Idepic_Bio"}.
-#' @param col_features A string specifying the column name in \code{data} that contains feature IDs (should be the same values as the colnames of \code{data}. For example, \code{"UNIPROT"}.
-#' @param path_out A string specifying the output directory where the processed data will be saved
-#' @param path_outliers A string specifying the output directory where outlier information will be saved
-#' @param exclusion_extreme A logical flag to indicate if features with extreme missingness should be excluded. Default is \code{FALSE}.
-#' @param col_missing A string specifying the column name in \code{data_meta_features} that contains the percentage of missing values for each feature. For example, \code{"missing_pct"}.
-#' @param missing_pct A numeric value specifying the threshold percentage for missingness above which features will be excluded. For example, \code{0.9}.
-#' @param imputation A logical flag to indicate if imputation should be performed. Default is \code{FALSE}.
-#' @param imputation_method A string specifying the method to use for imputation. Options are \code{"LOD"}, \code{"1/5th"}, \code{"KNN"}, \code{"ppca"}, \code{"median"}, \code{"mean"}, \code{"rf"}, and \code{"left-censored"}.
+#' @param data A data frame with the first column as sample IDs and remaining columns containing feature values, where feature IDs are the column names.
+#' @param data_meta_features A data frame containing metadata for the features, including information such as limit of detection and missingness percentage.
+#' @param data_meta_samples A data frame containing metadata for the samples, including information necessary for plate correction and case-control analysis.
+#' @param col_samples A string specifying the column name in \code{data} that contains sample IDs (e.g., \code{"Idepic_Bio"}).
+#' @param col_features A string specifying the column name in \code{data} that contains feature IDs, which should match the column names of \code{data} (e.g., \code{"UNIPROT"}).
+#' @param path_out A string specifying the output directory where the processed data will be saved.
+#' @param path_outliers A string specifying the output directory where outlier information will be saved.
+#' @param exclusion_extreme_feature A logical flag indicating whether to exclude features with extreme missingness. Default is \code{FALSE}.
+#' @param col_missing_feature A string specifying the column name in \code{data_meta_features} that contains the percentage of missing values for each feature (e.g., \code{"missing_pct"}).
+#' @param missing_pct_feature A numeric value specifying the threshold percentage for missingness above which features will be excluded (e.g., \code{0.9}).
+#' @param exclusion_extreme_sample A logical flag indicating whether to exclude samples with extreme missingness. Default is \code{FALSE}.
+#' @param col_missing_sample A string specifying the column name in \code{data_meta_samples} that contains the percentage of missing values for each sample (e.g., \code{"missing_pct_samples"}).
+#' @param missing_pct_sample A numeric value specifying the threshold percentage for missingness above which samples will be excluded (e.g., \code{0.9}).
+#' @param imputation A logical flag indicating whether imputation should be performed. Default is \code{FALSE}.
+#' @param imputation_method A string specifying the method to use for imputation. Options include \code{"LOD"}, \code{"1/5th"}, \code{"KNN"}, \code{"ppca"}, \code{"median"}, \code{"mean"}, \code{"rf"}, and \code{"left-censored"}.
 #' @param col_LOD A string specifying the column name in \code{data_meta_features} that contains the limit of detection (LOD) values, required if \code{imputation_method} is \code{"LOD"}.
-#' @param transformation A logical flag to indicate if transformation should be performed. Default is \code{FALSE}.
-#' @param transformation_method A string specifying the method to use for transformation. Options are \code{"InvRank"}, \code{"Log10"}, \code{"Log10Capped"}, and \code{"Log10ExclExtremes"}.
-#' @param outlier A logical flag to indicate if outlier exclusion should be performed across features and samples. Default is \code{FALSE}.
-#' @param plate_correction A logical flag to indicate if plate correction should be performed. Default is \code{FALSE}.
-#' @param cols_listRandom A string or vector specifying columns in \code{data_meta_samples} to be treated as random effects in plate correction. For example, \code{"batch_plate"}.
-#' @param cols_listFixedToKeep A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and kept in the model. For example, \code{c("Center", "Country")}.
-#' @param cols_listFixedToRemove NOT IMPLEMENTED YET: A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and removed from the model.
+#' @param transformation A logical flag indicating whether transformation should be performed. Default is \code{FALSE}.
+#' @param transformation_method A string specifying the method to use for transformation. Options include \code{"InvRank"}, \code{"Log10"}, \code{"Log10Capped"}, and \code{"Log10ExclExtremes"}.
+#' @param outlier A logical flag indicating whether outlier exclusion should be performed across features and samples. Default is \code{FALSE}.
+#' @param plate_correction A logical flag indicating whether plate correction should be performed. Default is \code{FALSE}.
+#' @param cols_listRandom A string or vector specifying columns in \code{data_meta_samples} to be treated as random effects in plate correction (e.g., \code{"batch_plate"}).
+#' @param cols_listFixedToKeep A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and retained in the model (e.g., \code{c("Center", "Country")}).
+#' @param cols_listFixedToRemove A vector specifying columns in \code{data_meta_samples} to be treated as fixed effects in plate correction and removed from the model. Default is \code{NULL}.
 #' @param col_HeteroSked A string specifying the column in \code{data_meta_samples} to be used for heteroskedasticity correction.
-#' @param case_control A logical flag to indicate if the data are case-control and matched samples should be handled accordingly. Default is \code{FALSE}.
-#' @param col_case_control A string specifying the column name in \code{data_meta_samples} that contains case-control matching information. For example, \code{"Match_Caseset"}.
+#' @param case_control A logical flag indicating whether the data are case-control and if matched samples should be handled accordingly. Default is \code{FALSE}.
+#' @param col_case_control A string specifying the column name in \code{data_meta_samples} that contains case-control matching information (e.g., \code{"Match_Caseset"}).
+#' @param centre_scale A logical flag indicating whether to center and scale the data. Default is \code{FALSE}.
 #'
-#' @return The processed and normalized data is saved to the specified output directory.
+#' @return The processed data is returned and saved as a `.rds` file to the specified output directory.
 #'
 #' @details
-#' This function performs several data processing steps:
+#' This function performs several data processing steps (in order):
 #' \itemize{
 #'   \item Excludes features with extreme missingness based on a specified threshold.
+#'   \item Excludes samples with extreme missingness based on a specified threshold.
 #'   \item Imputes missing values using various methods.
 #'   \item Transforms the data using specified methods.
-#'   \item Corrects for plate effects using specified random and fixed effects.
+#'   \item Excludes outlying samples and features using PCA and LOF.
 #'   \item Handles case-control data to ensure matched samples are treated appropriately.
+#'   \item Corrects for plate effects using specified random and fixed effects.
+#'   \item Centers and scales the data if \code{centre_scale} is \code{TRUE}.
 #' }
 #' @export
+
 process_data <- function(
     data,
     data_meta_features,
@@ -46,19 +57,54 @@ process_data <- function(
     col_features,
     path_out,
     path_outliers,
-    exclusion_extreme = FALSE, col_missing = NULL, missing_pct = NULL,
+    exclusion_extreme_feature = FALSE, col_missing_feature = NULL, missing_pct_feature = NULL,
+    exclusion_extreme_sample = FALSE, col_missing_sample = NULL, missing_pct_sample = NULL,
     imputation = FALSE, imputation_method = NULL, col_LOD = NULL,
     transformation = FALSE, transformation_method = NULL,
     outlier = FALSE,
     plate_correction = FALSE, cols_listRandom = NULL, cols_listFixedToKeep = NULL, cols_listFixedToRemove = NULL, col_HeteroSked = NULL,
+    centre_scale = FALSE,
     case_control = FALSE, col_case_control = NULL
 ) {
 
+  # df and VAR checks ====
+  ## Check if specified columns exist in the data frames
+  required_columns_data <- c(col_samples)
+  if (!all(required_columns_data %in% colnames(data))) {
+    stop("sample ID col is missing.")
+  }
+
+  ## Check if metadata columns exist
+  if (exclusion_extreme_feature) {
+    if (is.null(col_missing_feature) || is.null(missing_pct_feature)) {
+      stop("Both 'col_missing_feature' and 'missing_pct_feature' must be provided when 'exclusion_extreme_feature' is TRUE.")
+    }
+    if (!col_missing_feature %in% colnames(data_meta_features)) {
+      stop("The specified 'col_missing_feature' does not exist in 'data_meta_features'.")
+    }
+  }
+
+  if (exclusion_extreme_sample) {
+    if (is.null(col_missing_sample) || is.null(missing_pct_sample)) {
+      stop("Both 'col_missing_sample' and 'missing_pct_sample' must be provided when 'exclusion_extreme_sample' is TRUE.")
+    }
+    if (!col_missing_sample %in% colnames(data_meta_samples)) {
+      stop("The specified 'col_missing_sample' does not exist in 'data_meta_samples'.")
+    }
+  }
+
   # Create label for saving ====
-  if(exclusion_extreme == FALSE){
-    LABEL_exclusion_extreme <- as.character("FALSE")
+  if(exclusion_extreme_feature == FALSE){
+    LABEL_exclusion_extreme_feature <- as.character("FALSE")
   } else{
-    LABEL_exclusion_extreme <- as.character(missing_pct)
+    LABEL_exclusion_extreme_feature <- as.character(missing_pct_feature)
+    missing_pct_feature <- as.numeric(missing_pct_feature)
+  }
+  if(exclusion_extreme_sample == FALSE){
+    LABEL_exclusion_extreme_sample <- as.character("FALSE")
+  } else{
+    LABEL_exclusion_extreme_sample <- as.character(missing_pct_sample)
+    missing_pct_sample <- as.numeric(missing_pct_sample)
   }
   if(imputation == FALSE){
     LABEL_imputation <- as.character("FALSE")
@@ -70,15 +116,28 @@ process_data <- function(
   } else{
     LABEL_transformation <- as.character(transformation_method)
   }
+  if(outlier == FALSE){
+    LABEL_outlier <- as.character("FALSE")
+  } else{
+    LABEL_outlier <- as.character("TRUE")
+  }
   if(plate_correction == FALSE){
     LABEL_plate_correction <- as.character("FALSE")
   } else{
     LABEL_plate_correction <- as.character("TRUE")
   }
-  LABEL <- paste0("exclusion-", LABEL_exclusion_extreme,
+  if(centre_scale == FALSE){
+    LABEL_centre_scale <- as.character("FALSE")
+  } else{
+    LABEL_centre_scale <- as.character("TRUE")
+  }
+  LABEL <- paste0("exclusion-feature-", LABEL_exclusion_extreme_feature,
+                  "_exclusion-sample-", LABEL_exclusion_extreme_sample,
                   "_imputation-", LABEL_imputation,
                   "_transformation-", LABEL_transformation,
-                  "_platecorrection-", LABEL_plate_correction)
+                  "_outlier-", LABEL_outlier,
+                  "_platecorrection-", LABEL_plate_correction,
+                  "_centre-scale-", LABEL_centre_scale)
 
   # Prepare data ====
   df <- data %>%
@@ -86,26 +145,52 @@ process_data <- function(
   df_samples <- tibble::as_tibble(data_meta_samples)
   df_features <- tibble::as_tibble(data_meta_features)
 
-  # Extreme exclusion ====
-  if (exclusion_extreme) {
-    VAR_missing_pct <- missing_pct
-    cat(paste0("excluding features with more than ", VAR_missing_pct*100, "% missingness \n"))
+  # Extreme exclusion features ====
+  if (exclusion_extreme_feature) {
+    VAR_missing_pct <- missing_pct_feature
+    cat(paste0("# Exclusion features: excluding features with more than ", VAR_missing_pct*100, "% missingness \n"))
     ## remove features with >X% missing
-    id_features <- df_features %>%
-      dplyr::filter(.data[[col_missing]] > VAR_missing_pct) %>%
+    id_exclusion_extreme_feature <- df_features %>%
+      dplyr::filter(.data[[col_missing_feature]] > VAR_missing_pct) %>%
       dplyr::pull(col_features)
-
+    # filter data
     df <- df %>%
-      dplyr::select(-tidyselect::all_of(id_features))
+      dplyr::select(-tidyselect::all_of(id_exclusion_extreme_feature))
     ## filter feature data
     df_features <- df_features[df_features[[col_features]] %in% colnames(df), ]
+    cat(paste0("Exclusion features: excluded ", length(id_exclusion_extreme_feature), " feature(s)"))
   }
 
-  # imputation: replace missing values with X ====
+  # Extreme exclusion samples ====
+  if (exclusion_extreme_sample) {
+    VAR_missing_pct <- missing_pct_sample
+    cat(paste0("# Exclusion samples: excluding samples with more than ", VAR_missing_pct*100, "% missingness \n"))
+    ## remove samples with >X% missing
+    id_exclusion_extreme_sample <- df_samples %>%
+      dplyr::filter(.data[[col_missing_sample]] > VAR_missing_pct) %>%
+      dplyr::pull(col_samples)
+    # filter data
+    df <- df[!rownames(df) %in% id_exclusion_extreme_sample, ]
+    ## filter sample data
+    df_samples <- df_samples %>%
+      filter(!(!!sym(col_samples) %in% id_exclusion_extreme_sample))
+    cat(paste0("Exclusion samples: excluded ", length(id_exclusion_extreme_sample), " sample(s)"))
+  }
+
+  # imputation ====
   if (imputation) {
+    cat("# Imputation: ")
+    valid_imputation_methods <- c("LOD", "1/5th", "KNN", "ppca", "median", "mean", "rf", "left-censored")
+    if (is.null(imputation_method) || !(imputation_method %in% valid_imputation_methods)) {
+      stop(paste("Invalid imputation method. Choose from:", paste(valid_imputation_methods, collapse = ", ")))
+    }
+    if (imputation_method == "LOD" && is.null(col_LOD)) {
+      stop("The 'col_LOD' parameter must be provided when using 'LOD' imputation method.")
+    }
+
     ## LOD ====
     if (imputation_method == "LOD") {
-      cat("imputing using LOD \n")
+      cat("LOD \n")
       if(imputation_method == "LOD"){
         data_LOD <- stats::setNames(df_features[[col_LOD]], df_features[[col_features]])
       }
@@ -126,7 +211,7 @@ process_data <- function(
 
     ## 1/5th lowest detected value for each feature ====
     if (imputation_method == "1/5th") {
-      cat("imputing using 1/5th lowest detected value \n")
+      cat("1/5th lowest detected value \n")
       df <- df %>%
         dplyr::mutate(dplyr::across(tidyselect::where(is.numeric), ~ ifelse(is.na(.), 1/5 * min(., na.rm = TRUE), .))) %>%
         tibble::as_tibble() %>%
@@ -136,7 +221,7 @@ process_data <- function(
 
     ## KNN ====
     if (imputation_method == "KNN") {
-      cat("imputing using KNN \n")
+      cat("KNN \n")
       df <- df %>%
         as.matrix() %>% # Convert to matrix
         t() %>% # Transpose the matrix
@@ -150,7 +235,7 @@ process_data <- function(
 
     ## probabilistic pca ====
     if (imputation_method == "ppca") {
-      cat("imputing using probabilistic PCA \n")
+      cat("probabilistic PCA \n")
       df <- df %>%
         as.matrix() %>%
         pcaMethods::pca(nPcs = 3, method = "ppca") %>%
@@ -162,7 +247,7 @@ process_data <- function(
 
     ## median ====
     if (imputation_method == "median") {
-      cat("imputing using median \n")
+      cat("median \n")
       df <- df %>%
         as.matrix() %>%
         missMethods::impute_median(type = "columnwise") %>%
@@ -173,7 +258,7 @@ process_data <- function(
 
     ## mean ====
     if (imputation_method == "mean") {
-      cat("imputing using mean \n")
+      cat("mean \n")
       df <- df %>%
         as.matrix() %>%
         missMethods::impute_mean(type = "columnwise") %>%
@@ -184,7 +269,7 @@ process_data <- function(
 
     ## random forest ====
     if (imputation_method == "rf") {
-      cat("imputing using random forest \n")
+      cat("random forest \n")
       cl <- parallel::makeCluster(7)
       doParallel::registerDoParallel(cl)
       df <- df %>%
@@ -199,7 +284,7 @@ process_data <- function(
 
     ## left-censored ====
     if (imputation_method == "left-censored") {
-      cat("imputing using left-censored \n")
+      cat("left-censored \n")
       df <- df %>%
         as.matrix() %>%
         imputeLCMD::impute.MAR.MNAR(model.selector = imputeLCMD::model.Selector(.), method.MNAR = 'QRILC') %>%
@@ -211,20 +296,31 @@ process_data <- function(
 
   # transformation ====
   if (transformation) {
-    # transformation method ====
+    cat("# Transformation: ")
+    valid_transformation_methods <- c("InvRank", "Log10", "Log10Capped", "Log10ExclExtremes")
+    if (is.null(transformation_method) || !(transformation_method %in% valid_transformation_methods)) {
+      stop(paste("Invalid transformation method. Choose from:", paste(valid_transformation_methods, collapse = ", ")))
+    }
+
+    ## InvRank ====
     if (transformation_method == "InvRank") {
+      cat("InvRank \n")
       fun_scale <- function(.x) {
         out <- stats::qnorm((rank(.x, na.last = "keep") - 0.5) / sum(!is.na(.x))) # rank-inverse normalization
       }
     }
+    ## Log10 ====
     if (transformation_method == "Log10") {
+      cat("Log10 \n")
       fun_scale <- function(.x) { # log-transform + center/scale vector
         out <- log10(.x) # log-transform
         out <- out - mean(out) # center
         out <- out / sd(out) # scale to unit-variance
       }
     }
+    ## Log10Capped ====
     if (transformation_method == "Log10Capped") {
+      cat("Log10Capped \n")
       fun_scale <- function(.x) { # log-transform + center/scale vector
         out <- log10(.x) # log-transform
         out <- out - mean(out) # center
@@ -232,7 +328,9 @@ process_data <- function(
         out <- pmin(pmax(out, -5), 5) # now we replace any values out of the [-5, 5] range by +/- 5.
       }
     }
+    ## Log10ExclExtremes ====
     if (transformation_method == "Log10ExclExtremes") {
+      cat("Log10ExclExtremes \n")
       fun_scale <- function(.x) { # log-transform + center/scale vector
         out <- log10(.x) # log-transform
         out <- out - mean(out) # center
@@ -241,103 +339,142 @@ process_data <- function(
       }
     }
 
-    # transform ====
+    ## transform ====
     df <- df %>%
       dplyr::mutate(dplyr::across(dplyr::everything(), fun_scale))
   }
   # outlier exclusion ====
   if(outlier){
-    # Outlier identification
-    ## based on: https://privefl.github.io/blog/detecting-outlier-samples-in-pca/
-    # step 1: PCA sample wise and feature wise ====
-    pca_samples <- prcomp(x = df, rank. = 10)
-    data_samples_analysis <- pca_samples$x %>%
-      tibble::as_tibble() %>%
-      tibble::add_column(id = rownames(df), .before = 1) %>%
-      tibble::column_to_rownames(var = "id")
+    cat(paste0("# Outlier exclusion \n"))
 
-    data_features <- t(df)
-    pca_features <- stats::prcomp(x = data_features, rank. = 10)
-    data_features_analysis <- as.data.frame(pca_features$x)
+    if (any(is.na(df))) {
+      cat("There are missing values in the data; PCA is not possible with missing data\n",
+          "Outlier exclusions will be skipped and the label will be changed to reflect this")
+      LABEL <- paste0("exclusion-feature-", LABEL_exclusion_extreme_feature,
+                      "_exclusion-sample-", LABEL_exclusion_extreme_sample,
+                      "_imputation-", LABEL_imputation,
+                      "_transformation-", LABEL_transformation,
+                      "_outlier-FALSE",
+                      "_platecorrection-", LABEL_plate_correction,
+                      "_centre-scale-", LABEL_centre_scale)
 
-    # step 2: sample outliers ====
-    llof <- bigutilsr::LOF(data_samples_analysis) # compute distances using local outlier factor
-    outliers_samples <- which(llof > bigutilsr::tukey_mc_up(llof)) # identify outlier threshold using tukeys rule
-    id_samples_exclude <- rownames(data_samples_analysis[outliers_samples, ])
-    # plot PCs with lof highlighting
-    cat("making sample outlier plot \n")
-    data_samples_analysis$llof <- llof
-    plot_samples <- GGally::ggpairs(data_samples_analysis,
-                                    upper = list(continuous = "blank"),
-                                    diag = list(continuous = "blankDiag"),
-                                    lower = list(continuous = "points"),
-                                    columns = 1:10,
-                                    mapping = ggplot2::aes(color = llof),
-                                    legend = 11) +
-      ggplot2::scale_color_viridis_c(direction = -1, option = "F") +
-      ggplot2::labs(color = paste("Local outlier factor:", round(bigutilsr::tukey_mc_up(llof), 2)), title = paste0("Samples to exclude: ",  length(outliers_samples))) +
-      ggplot2::theme_minimal() +
-      ggplot2::theme(strip.background = ggplot2::element_rect(fill = "grey")) +
-      ggplot2::theme(legend.position = "bottom") +
-      ggplot2::theme(panel.spacing = grid::unit(1, "lines"))
+    } else {
+
+      # Outlier identification
+      ## based on: https://privefl.github.io/blog/detecting-outlier-samples-in-pca/
+      # step 1: PCA sample wise and feature wise ====
+      pca_samples <- prcomp(x = df, rank. = 10)
+      data_samples_analysis <- pca_samples$x %>%
+        tibble::as_tibble() %>%
+        tibble::add_column(id = rownames(df), .before = 1) %>%
+        tibble::column_to_rownames(var = "id")
+
+      data_features <- t(df)
+      pca_features <- stats::prcomp(x = data_features, rank. = 10)
+      data_features_analysis <- as.data.frame(pca_features$x)
+
+      # step 2: sample outliers ====
+      llof <- bigutilsr::LOF(data_samples_analysis) # compute distances using local outlier factor
+      outliers_samples <- which(llof > bigutilsr::tukey_mc_up(llof)) # identify outlier threshold using tukeys rule
+      id_exclusion_outlier_sample <- rownames(data_samples_analysis[outliers_samples, ])
+      cat(paste0("excluded ", length(id_exclusion_outlier_sample), " sample(s) \n"))
+      # plot PCs with lof highlighting
+      cat("making sample outlier plot \n")
+      data_samples_analysis$llof <- llof
+      plot_samples <- GGally::ggpairs(data_samples_analysis,
+                                      upper = list(continuous = "blank"),
+                                      diag = list(continuous = "blankDiag"),
+                                      lower = list(continuous = "points"),
+                                      columns = 1:10,
+                                      mapping = ggplot2::aes(color = llof),
+                                      legend = 11) +
+        ggplot2::scale_color_viridis_c(direction = -1, option = "F") +
+        ggplot2::labs(color = paste("Local outlier factor:", round(bigutilsr::tukey_mc_up(llof), 2)), title = paste0("Samples to exclude: ",  length(outliers_samples))) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(strip.background = ggplot2::element_rect(fill = "grey")) +
+        ggplot2::theme(legend.position = "bottom") +
+        ggplot2::theme(panel.spacing = grid::unit(1, "lines"))
 
 
-    # step 3: feature outliers ====
-    llof <- bigutilsr::LOF(data_features_analysis) # compute distances using local outlier factor
-    outliers_features <- which(llof > bigutilsr::tukey_mc_up(llof)) # identify outlier threshold using tukeys rule
-    id_features_exclude <- rownames(data_features_analysis[outliers_features, ])
-    # plot PCs with lof highlighting
-    cat("making feature outlier plot \n")
-    data_features_analysis$llof <- llof
-    plot_features <- GGally::ggpairs(data_features_analysis,
-                                     upper = list(continuous = "blank"),
-                                     diag = list(continuous = "blankDiag"),
-                                     lower = list(continuous = "points"),
-                                     columns = 1:10,
-                                     mapping = ggplot2::aes(color = llof),
-                                     legend = 11) +
-      ggplot2::scale_color_viridis_c(direction = -1, option = "F") +
-      ggplot2::labs(color = paste("Local outlier factor:", round(bigutilsr::tukey_mc_up(llof), 2)), title = paste0("Features to exclude: ",  length(outliers_features))) +
-      ggplot2::theme_minimal() +
-      ggplot2::theme(strip.background = ggplot2::element_rect(fill = "grey")) +
-      ggplot2::theme(legend.position = "bottom") +
-      ggplot2::theme(panel.spacing = grid::unit(1, "lines"))
+      # step 3: feature outliers ====
+      llof <- bigutilsr::LOF(data_features_analysis) # compute distances using local outlier factor
+      outliers_features <- which(llof > bigutilsr::tukey_mc_up(llof)) # identify outlier threshold using tukeys rule
+      id_exclusion_outlier_feature <- rownames(data_features_analysis[outliers_features, ])
+      cat(paste0("excluded ", length(id_exclusion_outlier_feature), " feature(s) \n"))
+      # plot PCs with lof highlighting
+      cat("making feature outlier plot \n")
+      data_features_analysis$llof <- llof
+      plot_features <- GGally::ggpairs(data_features_analysis,
+                                       upper = list(continuous = "blank"),
+                                       diag = list(continuous = "blankDiag"),
+                                       lower = list(continuous = "points"),
+                                       columns = 1:10,
+                                       mapping = ggplot2::aes(color = llof),
+                                       legend = 11) +
+        ggplot2::scale_color_viridis_c(direction = -1, option = "F") +
+        ggplot2::labs(color = paste("Local outlier factor:", round(bigutilsr::tukey_mc_up(llof), 2)), title = paste0("Features to exclude: ",  length(outliers_features))) +
+        ggplot2::theme_minimal() +
+        ggplot2::theme(strip.background = ggplot2::element_rect(fill = "grey")) +
+        ggplot2::theme(legend.position = "bottom") +
+        ggplot2::theme(panel.spacing = grid::unit(1, "lines"))
 
-    # step 4: exclusion ====
-    ## save figure
-    cat("saving outlier plots \n")
-    tiff(paste0(path_outliers, "plot-outliers_", LABEL, ".tiff"), width = 1000, height = 1000, units = "px")
-    print(cowplot::plot_grid(
-      GGally::ggmatrix_gtable(plot_samples),
-      GGally::ggmatrix_gtable(plot_features),
-      nrow = 2))
-    dev.off()
-    ## make exclusions
-    if(length(outliers_samples) > 0) {df <- df[-outliers_samples, ]}
-    if(length(outliers_features) > 0) {df <- df[, -outliers_features]}
-    ## save excluded IDs
-    cat("saving outlier info \n")
-    id_outliers <- list(features_extreme = id_features, features_lof = id_features_exclude, samples_lof = id_samples_exclude)
-    saveRDS(object = id_outliers, file = paste0(path_outliers, "id-outliers_", LABEL, ".rds"))
+      # step 4: exclusion ====
+      ## save figure
+      cat("saving outlier plots \n")
+      tiff(paste0(path_outliers, "plot-outliers_", LABEL, ".tiff"), width = 1500, height = 1500, units = "px")
+      print(cowplot::plot_grid(
+        GGally::ggmatrix_gtable(plot_samples),
+        GGally::ggmatrix_gtable(plot_features),
+        nrow = 2))
+      dev.off()
+      ## make exclusions ====
+      if(length(outliers_samples) > 0) {
+        # filter data
+        df <- df[!rownames(df) %in% id_exclusion_outlier_sample, ]
+        ## filter sample data
+        df_samples <- df_samples %>%
+          filter(!(!!sym(col_samples) %in% id_exclusion_outlier_sample))
+      }
+
+      if(length(outliers_features) > 0) {
+        # filter data
+        df <- df %>%
+          dplyr::select(-tidyselect::all_of(id_exclusion_outlier_feature))
+        ## filter feature data
+        df_features <- df_features[df_features[[col_features]] %in% colnames(df), ]
+      }
+
+    }
   }
 
   # case-control data ====
-  if(case_control){
-    ## re-filter feature data based on matched cases
-    ## filter meta data for included samples
-    col_case_control <- rlang::sym(col_case_control)
-    df_samples <- df_samples %>%
-      dplyr::filter(.data[[col_samples]] %in% rownames(df))
+  if (case_control) {
+    cat("# Case control \n")
+    if (is.null(col_case_control)) {
+      stop("The 'col_case_control' parameter must be provided when 'case_control' is TRUE.")
+    }
+    if (!col_case_control %in% colnames(data_meta_samples)) {
+      stop("The specified 'col_case_control' does not exist in 'data_meta_samples'.")
+    }    ## re-filter feature data based on matched cases
+    id_exclusion_matchcaseset <- df_samples %>%
+      dplyr::group_by(!!sym(col_case_control)) %>%  # Group by the Match_Caseset
+      dplyr::summarize(count = n(), .groups = 'drop') %>%
+      dplyr::filter(count < 2 | count > 2) %>%  # Keep those with less than or more than 2
+      dplyr::inner_join(df_samples, by = col_case_control) %>%  # Join back to df_samples
+      dplyr::pull(!!sym(col_samples))  # Pull the Idepic_Bio values to exclude
+
+    cat("# Case control matching caseset exclusion: excluded", length(id_exclusion_matchcaseset), "samples due to already excluded matched caseset \n")
+    # col_case_control <- rlang::sym(col_case_control)
 
     ## exclude individuals without a matched caseset
     df_samples <- df_samples %>%
-      dplyr::group_by(!!col_case_control) %>%
+      dplyr::group_by(!!sym(col_case_control)) %>%
       dplyr::filter(n() >= 2) %>%
       dplyr::ungroup()
 
     ## exclude matched casesets with more than two people
     df_samples <- df_samples %>%
-      dplyr::group_by(!!col_case_control) %>%
+      dplyr::group_by(!!sym(col_case_control)) %>%
       dplyr::filter(n() <= 2) %>%
       dplyr::ungroup()
 
@@ -345,8 +482,13 @@ process_data <- function(
     df <- df[rownames(df) %in% df_samples[[col_samples]], ]
   }
 
-  # normalisation and plate correction ====
-  if(plate_correction){
+  # plate correction ====
+  if (plate_correction) {
+    cat("# Plate correction \n")
+    # Check required columns for plate correction
+    if (is.null(cols_listRandom) || is.null(cols_listFixedToKeep)) {
+      stop("Both 'cols_listRandom' and 'cols_listFixedToKeep' must be provided for plate correction.")
+    }
     ## convert rownames to column1
     df <- df %>%
       tibble::rownames_to_column(var = col_samples)
@@ -357,20 +499,47 @@ process_data <- function(
                  dplyr::rename(Name = tidyselect::all_of(col_features)))
     ## transformation
     df <- normalization_residualMixedModels(df,
-                                            forIdentifier = col_samples, # sample ID
-                                            listRandom = cols_listRandom, # variables to model as random effects; effects will be removed
-                                            listFixedToKeep = cols_listFixedToKeep, # variables to model as fixed effects; effects will be kept
-                                            listFixedToRemove = cols_listFixedToRemove, # variables to model as fixed effects; effects will be removed
-                                            HeteroSked = col_HeteroSked # variable for which heteroscedasticity will be accounted for
+                                               forIdentifier = col_samples, # sample ID
+                                               listRandom = cols_listRandom, # variables to model as random effects; effects will be removed
+                                               listFixedToKeep = cols_listFixedToKeep, # variables to model as fixed effects; effects will be kept
+                                               listFixedToRemove = cols_listFixedToRemove, # variables to model as fixed effects; effects will be removed
+                                               HeteroSked = col_HeteroSked # variable for which heteroscedasticity will be accounted for
     )
     df <- df$data %>%
       dplyr::select(-tidyselect::all_of(c(cols_listRandom, cols_listFixedToKeep)))
-    saveRDS(object = df, file = paste0(path_out, "data-features_", LABEL, ".rds"))
-  } else {
-    saveRDS(object = df, file = paste0(path_out, "data-features_", LABEL, ".rds"))
   }
+
+  # centre and scale ====
+  if(centre_scale){
+    cat("# centre and scale: mean = 0; SD = 1 \n")
+    df <- df %>%
+      mutate(across(where(is.numeric), ~ scale(.)))
+  }
+
+  # save excluded IDs ====
+  cat("# saving outlier info \n")
+  id_outliers <- list(
+    if (exists("id_exclusion_extreme_feature")) id_exclusion_extreme_feature else NULL,
+    if (exists("id_exclusion_extreme_sample")) id_exclusion_extreme_sample else NULL,
+    if (exists("id_exclusion_outlier_feature")) id_exclusion_outlier_feature else NULL,
+    if (exists("id_exclusion_outlier_sample")) id_exclusion_outlier_sample else NULL,
+    if (exists("id_exclusion_matchcaseset")) id_exclusion_matchcaseset else NULL
+  )
+  names(id_outliers) <- c("id_exclusion_extreme_feature", "id_exclusion_extreme_sample", "id_exclusion_outlier_feature", "id_exclusion_outlier_sample", "id_exclusion_matchcaseset")
+
+  cat("total feature(s) excluded =", length(id_exclusion_extreme_feature) + length(id_exclusion_outlier_feature), "\n")
+  cat("total sample(s) excluded =", length(id_exclusion_extreme_sample) + length(id_exclusion_outlier_sample) + length(id_exclusion_matchcaseset), "\n")
+
+
+  saveRDS(object = id_outliers, file = paste0(path_outliers, "id-exclusions-outliers_", LABEL, ".rds"))
+
+  # save ====
+  cat("# saving feature data \n")
+  saveRDS(object = df, file = paste0(path_out, "data-features_", LABEL, ".rds"))
+  # return ====
   return(df)
 }
+
 
 #' Normalize feature Data Using Residual Mixed Models
 #'
