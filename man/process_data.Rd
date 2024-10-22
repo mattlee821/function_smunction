@@ -10,6 +10,7 @@ process_data(
   data_meta_samples,
   col_samples,
   col_features,
+  save = FALSE,
   path_out,
   path_outliers,
   exclusion_extreme_feature = FALSE,
@@ -44,6 +45,8 @@ process_data(
 \item{col_samples}{A string specifying the column name in \code{data} that contains sample IDs (e.g., \code{"Idepic_Bio"}).}
 
 \item{col_features}{A string specifying the column name in \code{data} that contains feature IDs, which should match the column names of \code{data} (e.g., \code{"UNIPROT"}).}
+
+\item{save}{A logical for whether you want to save the feature data, plots, and exclusion info. Default is \code{FALSE}/.}
 
 \item{path_out}{A string specifying the output directory where the processed data will be saved.}
 
