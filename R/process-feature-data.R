@@ -43,10 +43,10 @@
 #'   \item Excludes samples with extreme missingness based on a specified threshold.
 #'   \item Imputes missing values using various methods.
 #'   \item Transforms the data using specified methods.
+#'   \item Centers and scales the data if \code{centre_scale} is \code{TRUE}.
 #'   \item Excludes outlying samples and features using PCA and LOF.
 #'   \item Handles case-control data to ensure matched samples are treated appropriately.
 #'   \item Corrects for plate effects using specified random and fixed effects.
-#'   \item Centers and scales the data if \code{centre_scale} is \code{TRUE}.
 #' }
 #' @export
 
@@ -168,7 +168,7 @@ process_data <- function(
     df <- df[!rownames(df) %in% id_exclusion_extreme_sample, ]
     ## filter sample data
     df_samples <- df_samples %>%
-      filter(!(!!sym(col_samples) %in% id_exclusion_extreme_sample))
+      dplyr::filter(!(!!rlang::sym(col_samples) %in% id_exclusion_extreme_sample))
     cat(paste0("## Exclusion samples: excluded ", length(id_exclusion_extreme_sample), " sample(s) \n"))
   }
 
@@ -439,7 +439,7 @@ process_data <- function(
         df <- df[!rownames(df) %in% id_exclusion_outlier_sample, ]
         ## filter sample data
         df_samples <- df_samples %>%
-          filter(!(!!sym(col_samples) %in% id_exclusion_outlier_sample))
+          dplyr::filter(!(!!rlang::sym(col_samples) %in% id_exclusion_outlier_sample))
       }
 
       if(length(outliers_features) > 0) {
@@ -463,24 +463,24 @@ process_data <- function(
       stop("* The specified 'col_case_control' does not exist in 'data_meta_samples'.")
     }    ## re-filter feature data based on matched cases
     id_exclusion_matchcaseset <- df_samples %>%
-      dplyr::group_by(!!sym(col_case_control)) %>%  # Group by the Match_Caseset
-      dplyr::summarize(count = n(), .groups = 'drop') %>%
+      dplyr::group_by(!!rlang::sym(col_case_control)) %>%  # Group by the Match_Caseset
+      dplyr::summarize(count = dplyr::n(), .groups = 'drop') %>%
       dplyr::filter(count < 2 | count > 2) %>%  # Keep those with less than or more than 2
       dplyr::inner_join(df_samples, by = col_case_control) %>%  # Join back to df_samples
-      dplyr::pull(!!sym(col_samples))  # Pull the Idepic_Bio values to exclude
+      dplyr::pull(!!rlang::sym(col_samples))  # Pull the Idepic_Bio values to exclude
 
     cat("## excluded", length(id_exclusion_matchcaseset), "samples due to already excluded matched caseset \n")
     # col_case_control <- rlang::sym(col_case_control)
 
     ## exclude individuals without a matched caseset
     df_samples <- df_samples %>%
-      dplyr::group_by(!!sym(col_case_control)) %>%
+      dplyr::group_by(!!rlang::sym(col_case_control)) %>%
       dplyr::filter(n() >= 2) %>%
       dplyr::ungroup()
 
     ## exclude matched casesets with more than two people
     df_samples <- df_samples %>%
-      dplyr::group_by(!!sym(col_case_control)) %>%
+      dplyr::group_by(!!rlang::sym(col_case_control)) %>%
       dplyr::filter(n() <= 2) %>%
       dplyr::ungroup()
 
@@ -504,15 +504,16 @@ process_data <- function(
                data_meta_features = df_features %>%
                  dplyr::rename(Name = tidyselect::all_of(col_features)))
     ## transformation
-    df <- normalization_residualMixedModels(df,
-                                            forIdentifier = col_samples, # sample ID
-                                            listRandom = cols_listRandom, # variables to model as random effects; effects will be removed
-                                            listFixedToKeep = cols_listFixedToKeep, # variables to model as fixed effects; effects will be kept
-                                            listFixedToRemove = cols_listFixedToRemove, # variables to model as fixed effects; effects will be removed
-                                            HeteroSked = col_HeteroSked # variable for which heteroscedasticity will be accounted for
+    df <- functions::normalization_residualMixedModels(df,
+                                               forIdentifier = col_samples, # sample ID
+                                               listRandom = cols_listRandom, # variables to model as random effects; effects will be removed
+                                               listFixedToKeep = cols_listFixedToKeep, # variables to model as fixed effects; effects will be kept
+                                               listFixedToRemove = cols_listFixedToRemove, # variables to model as fixed effects; effects will be removed
+                                               HeteroSked = col_HeteroSked # variable for which heteroscedasticity will be accounted for
     )
     df <- df$data %>%
-      dplyr::select(-tidyselect::all_of(c(cols_listRandom, cols_listFixedToKeep)))
+      dplyr::select(-tidyselect::all_of(c(cols_listRandom, cols_listFixedToKeep))) %>%
+      tibble::column_to_rownames(col_samples)
   }
 
   # centre and scale ====
@@ -524,7 +525,7 @@ process_data <- function(
       cat("* Log10 transformation was applied and included centering and scaling. Skipping this centering and scaling step.\n")
     } else {
       df <- df %>%
-        mutate(across(where(is.numeric), ~ scale(.)))
+        dplyr::mutate(dplyr::across(dplyr::where(is.numeric), ~ scale(.)))
       cat("## data centred and scaled \n")
 
     }
@@ -591,19 +592,23 @@ process_data <- function(
 
     ## save feature data ====
     cat("## saving feature data \n")
-    saveRDS(object = df, file = paste0(path_out, "data-features_", LABEL, ".rds"))
+    df_obj <- df %>%
+      tibble::rownames_to_column(col_samples)
+    saveRDS(object = df_obj, file = paste0(path_out, "data-features_", LABEL, ".rds"))
   }
   # return ====
-  if(outlier) {
+  if(LABEL_outlier) {
     cat("# returning a list of feature data and outlier plots")
+    df <- df %>%
+      tibble::rownames_to_column(col_samples)
     return(list(df = df, plot_samples = plot_samples, plot_features = plot_features))
   } else {
     cat("# returning feature data")
+    df <- df %>%
+      tibble::rownames_to_column(col_samples)
     return(df)
   }
 }
-
-
 
 #' Normalize feature Data Using Residual Mixed Models
 #'
@@ -657,16 +662,16 @@ normalization_residualMixedModels <- function(list,
 
   # Check for consistency between data_features and data_samples ====
   if (sum(data_features$IdentifierPipeline == data_samples$IdentifierPipeline) < nrow(data_features)) {
-    stop("Idepic should be the same in data_features and data_samples")
+    stop("col_samples should be the same in data_features and data_samples")
   }
 
   # Merge data_features with data_samples and select relevant columns ====
   var.context <- unique(c("IdentifierPipeline", forIdentifier, listRandom, listFixedToKeep, listFixedToRemove))
   data <- dplyr::left_join(data_features,
-                    data_samples %>%
-                      dplyr::select(tidyselect::all_of(var.context)) %>%
-                      dplyr::select(-tidyselect::any_of(forIdentifier)),
-                    by = "IdentifierPipeline") %>%
+                           data_samples %>%
+                             dplyr::select(tidyselect::all_of(var.context)) %>%
+                             dplyr::select(-tidyselect::any_of(forIdentifier)),
+                           by = "IdentifierPipeline") %>%
     dplyr::select(tidyselect::all_of(var.context), tidyselect::all_of(colnames(list$data_features)[which(colnames(list$data_features) %in% data_meta_features$Name)]))
 
   # Prepare data for modeling
@@ -748,14 +753,31 @@ FUNnormalization_residualMixedModels <- function(df,
     textformulaMixed <- paste("y ~", paste0(listFixed, collapse = "+"),
                               paste0(" + (1|", paste0(listRandom, collapse = ") + (1|"), ")"))
     tochecklmer <- tryCatch(lme4::lmer(stats::as.formula(textformulaMixed), data = df_lmer,
-                                 control = lme4::lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))),
+                                       control = lme4::lmerControl(optimizer = "bobyqa", optCtrl = list(maxfun = 2e5))),
                             error = function(e) NULL)
+
     if (!is.null(tochecklmer)) {
       if (!is.null(listFixedToKeep)) {
         Y1[indNoNAs] <- XFixedToKeep %*% matrix(lme4::fixef(tochecklmer)[names(lme4::fixef(tochecklmer)) %in% colnames(XFixedToKeep)], ncol = 1) + stats::resid(tochecklmer)
       } else {
         Y1[indNoNAs] <- mean(y) + stats::resid(tochecklmer)
       }
+
+      # Check for collinearity (VIF)
+      cat("## Collinearity (VIF) for:", i, "\n")
+      vif_values <- car::vif(tochecklmer)
+      print(vif_values)
+
+      # Check the random effects variance
+      cat("## Random effects variance for:", i, "\n")
+      rand_var <- lme4::VarCorr(tochecklmer)
+      print(rand_var)
+
+      # Check for singularity
+      cat("## Model for", i, "is singular:", lme4::isSingular(tochecklmer), "\n")
+
+    } else {
+      cat("## Model did not converge for:", i, "\n")
     }
   } else {
     # Fit mixed model with heteroskedasticity correction
@@ -764,8 +786,8 @@ FUNnormalization_residualMixedModels <- function(df,
     textformulaFixedHeteroSked <- paste("y ~", paste0(listFixed, collapse = "+"))
 
     tochecklme <- tryCatch(nlme::lme(stats::as.formula(textformulaFixedHeteroSked), random = listrandomeffect, weights = nlme::varIdent(form = forweights),
-                               data = df_lmer,
-                               control = list(maxIter = 900, msMaxIter = 900, niterEM = 900, msMaxEval = 900, opt = "optim")),
+                                     data = df_lmer,
+                                     control = list(maxIter = 900, msMaxIter = 900, niterEM = 900, msMaxEval = 900, opt = "optim")),
                            error = function(e) NULL)
 
     if (!is.null(tochecklme)) {
@@ -776,11 +798,27 @@ FUNnormalization_residualMixedModels <- function(df,
       } else {
         Y1[indNoNAs] <- mean(y) + stats::residuals(tochecklme, type = "pearson") / forrescale
       }
+
+      # Check for collinearity (VIF)
+      cat("## Collinearity (VIF) for:", i, "\n")
+      vif_values <- car::vif(tochecklme)
+      print(vif_values)
+
+      # Check the random effects variance
+      cat("## Random effects variance for:", i, "\n")
+      rand_var <- nlme::VarCorr(tochecklme)
+      print(rand_var)
+
+      # Check for singularity (only applies to lmer models, so not applicable here)
+      cat("## Singular check not applicable to nlme models for:", i, "\n")
+    } else {
+      cat("## Model did not converge for:", i, "\n")
     }
   }
 
   return(Y1)
 }
+
 
 #' Calculate Intraclass Correlation Coefficient (ICC)
 #'

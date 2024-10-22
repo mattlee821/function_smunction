@@ -108,9 +108,9 @@ This function performs several data processing steps (in order):
 \item Excludes samples with extreme missingness based on a specified threshold.
 \item Imputes missing values using various methods.
 \item Transforms the data using specified methods.
+\item Centers and scales the data if \code{centre_scale} is \code{TRUE}.
 \item Excludes outlying samples and features using PCA and LOF.
 \item Handles case-control data to ensure matched samples are treated appropriately.
 \item Corrects for plate effects using specified random and fixed effects.
-\item Centers and scales the data if \code{centre_scale} is \code{TRUE}.
 }
 }
