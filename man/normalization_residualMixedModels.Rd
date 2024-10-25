@@ -50,5 +50,6 @@ A list with:
 \description{
 This function normalizes feature data by removing unwanted effects using mixed models.
 It accounts for random effects and fixed effects specified by the user, and optionally
-corrects for heteroskedasticity.
+corrects for heteroskedasticity. Residuals are calculated with \code{FUNnormalization_residualMixedModels()}.
+The method is details in \url{https://www.mdpi.com/2218-1989/11/9/631}
 }
