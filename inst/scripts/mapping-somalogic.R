@@ -248,21 +248,19 @@ data_map <- bind_rows(
   distinct() %>%
   as.data.frame()
 
+columns <- c(
+  "SeqId", "SomaId", "UNIPROT", "Target", "TargetFullName", "EntrezGeneID", "EntrezGeneSymbol",
+  "uniprot_gn_id", "uniprot_gn_symbol",
+  "entrezgene_id","entrezgene_accession",
+  "hgnc_id", "hgnc_symbol", "external_gene_name","gene_biotype",
+  "CHR", "START_hg19", "END_hg19", "strand_hg19","START_hg38", "END_hg38", "strand_hg38"
+)
+data_map <- data_map[, columns]
+
 ## write
 write.table(x = data_map,
-            file = paste0("mapping-", VAR_build, "_somalogic.txt"),
+            file = paste0("inst/data/mapping_", VAR_build, "_somalogic.txt"),
             sep = "\t", col.names = T, row.names = F, quote = FALSE)
-
-
-# counts ====
-dataframes <- list(data = data, data_map = data_map, data_map1 = data_map1)
-# Function to count unique values in each column for a given dataframe
-count_unique_values <- function(df) {
-  sapply(df, function(x) length(unique(x)))
-}
-# Apply the function to each dataframe and combine the results
-counts <- lapply(dataframes, count_unique_values) %>%
-  bind_rows(.id = "dataframe") %>%
-  pivot_longer(cols = -dataframe, names_to = "column_name", values_to = "unique_values")
-counts <- unique_values_table %>%
-  filter(!is.na(unique_values))
+# save(data_map, file = paste0("data/mapping_", VAR_build, "_somalogic.RData"))
+mapping_GRCh38_p14_somalogic <- data_map
+usethis::use_data(mapping_GRCh38_p14_somalogic, overwrite = TRUE)

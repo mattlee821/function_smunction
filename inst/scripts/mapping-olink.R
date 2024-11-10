@@ -92,7 +92,7 @@ biomaRt_getBM_batch <- function(mart, attributes, filters, values, chunk_size) {
 
 # data ====
 # HT panel - https://view-su3.highspot.com/viewer/1ca88054dbbf92809402c590b5cb8b39 - i got a csv directly from olink
-data <- readxl::read_xlsx("/Users/leem/Desktop/Olink Explore HT_Assay list_2024-10-31.xlsx", skip = 6)
+data <- readxl::read_xlsx("/Users/leem/OneDrive - International Agency for Research on Cancer/001_projects/functions/inst/data/Olink Explore HT_Assay list_2024-10-31.xlsx", skip = 6)
 
 ## format data
 data <- data %>%
@@ -222,21 +222,19 @@ data_map <- bind_rows(
   distinct() %>%
   as.data.frame()
 
+columns <- c(
+  "olinkID", "UNIPROT", "Target","TargetFullName",
+  "uniprot_gn_id", "uniprot_gn_symbol",
+  "entrezgene_id", "entrezgene_accession",
+  "hgnc_id", "hgnc_symbol", "external_gene_name", "gene_biotype",
+  "CHR", "START_hg19", "END_hg19", "strand_hg19", "START_hg38", "END_hg38", "strand_hg38"
+)
+data_map <- data_map[, columns]
+
 ## write
 write.table(x = data_map,
-            file = paste0("mapping-", VAR_build, "_olink.txt"),
+            file = paste0("inst/data/mapping_", VAR_build, "_olink.txt"),
             sep = "\t", col.names = T, row.names = F, quote = FALSE)
-
-
-# counts ====
-dataframes <- list(data = data, data_map = data_map, data_map1 = data_map1)
-# Function to count unique values in each column for a given dataframe
-count_unique_values <- function(df) {
-  sapply(df, function(x) length(unique(x)))
-}
-# Apply the function to each dataframe and combine the results
-counts <- lapply(dataframes, count_unique_values) %>%
-  bind_rows(.id = "dataframe") %>%
-  pivot_longer(cols = -dataframe, names_to = "column_name", values_to = "unique_values")
-counts <- counts %>%
-  filter(!is.na(unique_values))
+# save(data_map, file = paste0("data/mapping_", VAR_build, "_olink.RData"))
+mapping_GRCh38_p14_olink <- data_map
+usethis::use_data(mapping_GRCh38_p14_olink, overwrite = TRUE)
