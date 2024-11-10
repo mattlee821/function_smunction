@@ -2,6 +2,7 @@
 
 export("%>%")
 export(FUNnormalization_residualMixedModels)
+export(biomaRt_getBM_batch)
 export(blank_plot)
 export(calculate_ICC)
 export(calculate_and_insert_percent_change)

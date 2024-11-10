@@ -5,7 +5,7 @@ Version: 0.0.1
 Author: Matthew Lee
 Maintainer: Matthew Lee <matthewlee821@gmail.com>
 Description: package of useful functions to make life easier...
-License: MIT + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
@@ -27,7 +27,8 @@ Suggests:
   AICcmodavg,coloc,susieR,ggstance,gwasvcf,genetics.binaRies,survival,TwoSampleMR,
   wesanderson,ggforestplot,scales,calibrate,cowplot,reshape2,ggrepel,locuscomparer,
   haven,readstata13,readxl,GGally,bigutilsr,impute,imputeLCMD,missForest,
-  missMethods,pcaMethods,viridis,doParallel,foreach,car,lmtest,clusterProfiler,hglm,lme4,nlme
+  missMethods,pcaMethods,viridis,doParallel,foreach,car,lmtest,clusterProfiler,hglm,lme4,nlme,
+  biomaRt
 Remotes:
   NightingaleHealth/ggforestplot,
   MRCIEU/genetics.binaRies,
@@ -37,3 +38,5 @@ Remotes:
   boxiangliu/locuscomparer
 Files:
   inst/doc/imputation-test.qmd
+Depends: 
+    R (>= 2.10)
