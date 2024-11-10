@@ -2,24 +2,23 @@
 % Please edit documentation in R/percent-change-insertion.R
 \name{calculate_and_insert_percent_change}
 \alias{calculate_and_insert_percent_change}
-\title{precent change and insertion}
+\title{Percent Change and Insertion}
 \usage{
 calculate_and_insert_percent_change(data1, data2, col_name)
 }
 \arguments{
-\item{data1}{your original dataframe}
+\item{data1}{The original dataframe.}
 
-\item{data2}{your second dataframe}
+\item{data2}{The second dataframe to which the percent change columns will be added.}
 
-\item{col_name}{the name of the column to calculate percent change for}
+\item{col_name}{The name of the column (as a character string) to calculate the percent change for.}
 }
 \value{
-a dataframe
+A dataframe with the new percent change columns added to \code{data2}.
 }
 \description{
-You need two data frames of equal size. The function assumes column 1 is an unused ID column.
+This function calculates the percent change between corresponding columns in two dataframes and inserts these changes as new columns in the second dataframe. It assumes that the first column in each dataframe is an unused ID column.
 }
 \note{
-for (col_name in colnames(data2)) {
-data2 <- calculate_and_insert_percent_change(data1, data2, col_name)}
+Both \code{data1} and \code{data2} must have the same structure and number of rows. Column 1 should be excluded from calculations.
 }
