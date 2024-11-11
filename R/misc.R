@@ -131,3 +131,248 @@ biomaRt_getBM_batch <- function(mart, attributes, filters, values, chunk_size) {
   return(map)
 }
 
+#' check the alignment of GWAS to reference panel and flip allele beta where required
+#'
+#' This function performs an alignment check for GWAS data by comparing the input
+#' data (`df`) with a reference dataset (`reference`). It checks if the alleles
+#' in the data are aligned and flips the alleles when necessary to ensure
+#' consistency with the reference. The function also computes an LD matrix,
+#' performs a kriging-based procedure to adjust the z-scores, and generates a
+#' series of plots to visualize the alignment.
+#'
+#' @param df A data frame containing the GWAS summary statistics.
+#' The following columns should be present:
+#' \itemize{
+#'   \item \strong{CHR}: Chromosome number (integer).
+#'   \item \strong{POS}: Position of the SNP (integer).
+#'   \item \strong{SNP}: SNP identifier (character).
+#'   \item \strong{EA}: Effect allele (character).
+#'   \item \strong{OA}: Other allele (character).
+#'   \item \strong{EAF}: Effect allele frequency (numeric).
+#'   \item \strong{BETA}: Effect size estimate (numeric).
+#'   \item \strong{SE}: Standard error of the effect size (numeric).
+#'   \item \strong{P}: P-value for the association (numeric).
+#'   \item \strong{N}: Sample size (integer).
+#'   \item \strong{phenotype}: Phenotype identifier (character).
+#' }
+#'
+#' @param reference A data frame containing the reference data for comparison.
+#' The following columns should be present:
+#' \itemize{
+#'   \item \strong{Predictor}: SNP identifier (character).
+#'   \item \strong{A1}: Allele 1 (character).
+#'   \item \strong{A2}: Allele 2 (character).
+#'   \item \strong{A1_Mean}: Mean value for allele 1 (numeric).
+#'   \item \strong{MAF}: Minor allele frequency (numeric).
+#'   \item \strong{Call_Rate}: Call rate (integer).
+#'   \item \strong{Info}: Information score (integer).
+#' }
+#'
+#' @param bfile file path for reference population (built for using 1kG,
+#' e.g., /path/EUR/EUR).
+#'
+#' @return A list containing:
+#' \itemize{
+#'   \item \strong{plots}: A list of plots, including the alignment plot and
+#'   observed vs expected z-score plots.
+#'   \item \strong{list_df}: The final data frame after allele flipping and
+#'   adjustments.
+#'   \item \strong{lambda}: A list of lambda estimates for the adjusted z-scores.
+#' }
+#'
+#' @details
+#' The function first merges the GWAS summary statistics with the reference data
+#' based on the SNP identifier and flips the effect sizes if the effect allele
+#' (EA) does not match allele 1 (A1) in the reference. It then computes an LD
+#' matrix using the `ieugwasr::ld_matrix_local` function, which is used in
+#' subsequent analyses. The function also runs a kriging procedure using
+#' `susieR::kriging_rss` to adjust the z-scores based on the LD matrix, and
+#' generates plots comparing the observed and expected z-scores before and
+#' after allele flipping. The function will iteratively flip alleles and update
+#' the data until no moreallele flips are needed (based on a log likelihood
+#' ratio test).
+#' @export
+alignment_check <- function(df, reference, bfile) {
+  cat("# START \n")
+  list_plot <- list()
+  list_lambda <- list()
+
+  # Data ====
+  df <- df %>%
+    dplyr::inner_join(reference, by = c("SNP" = "Predictor")) %>%
+    dplyr::mutate(BETA = ifelse(EA != A1, -BETA, BETA)) %>%  # Flip beta if EA != A1 to align GWAS with reference
+    dplyr::distinct(SNP, .keep_all = TRUE)
+  # Check if the df has been created correctly
+  if (nrow(df) == 0) {
+    stop("Data frame 'df' is empty")
+  }
+  cat("## DF made \n")
+
+  # LD matrix ====
+  ld <- ieugwasr::ld_matrix_local(
+    df$SNP,
+    with_alleles = FALSE,
+    bfile = bfile,
+    plink_bin = plinkbinr::get_plink_exe()
+  )
+  # Check if the LD matrix has been created correctly
+  if (is.null(ld) || nrow(ld) == 0) {
+    stop("LD matrix is NULL or empty")
+  }
+  cat("## LD matrix made \n")
+
+  # list_df ====
+  list_df <- list(
+    beta = df$BETA,
+    varbeta = df$SE^2,
+    p = df$P,
+    N = min(df$N),
+    z = df$BETA / df$SE,
+    MAF = df$EAF,
+    LD = ld,
+    type = "quant",
+    snp = rownames(ld),
+    pos = df$POS,
+    phenotype = unique(df$phenotype)
+  )
+  cat("## list_df made \n")
+
+  # alignment plot ====
+  plot_alignment <- functions::coloc_check_alignment(D = list_df, do_plot = TRUE)
+  # Check if the alignment plot is not NULL
+  if (is.null(plot_alignment)) {
+    stop("Alignment plot is NULL")
+  }
+  cat("## plot_alignment made \n")
+  list_plot[[length(list_plot) + 1]] <- plot_alignment
+
+  # VAR_lambda ====
+  VAR_lambda <- susieR::estimate_s_rss(z = list_df$z,
+                                       R = list_df$LD,
+                                       n = list_df$N)
+  list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
+  cat("## VAR_lambda:", VAR_lambda, "\n")
+
+  # kriging_rss ====
+  res_kriging <- susieR::kriging_rss(
+    z = list_df$z,
+    R = list_df$LD,
+    n = list_df$N,
+    s = VAR_lambda)
+  # Check for NULL or empty values in the conditional distribution
+  if (is.null(res_kriging$conditional_dist)) {
+    stop("kriging_rss conditional distribution is NULL")
+  }
+  cat("## kriging_rss made \n")
+
+  # Create plot for observed vs expected ====
+  plot_observed_expected <- res_kriging$plot +
+    ggplot2::labs(title = "Distribution of z-scores") +
+    ggplot2::labs(subtitle = paste0("Before allele flipping; lambda = ", round(VAR_lambda,4)))
+  # Append the plot to the list
+  list_plot[[length(list_plot) + 1]] <- plot_observed_expected
+  cat("## plot_observed_expected made \n")
+
+  # id for flipping ====
+  id <- res_kriging$conditional_dist
+  id <- which(id$logLR > 2 & abs(id$z) > 2)
+  # If no rows to flip, exit the loop and return the plots and list_df
+  if (length(id) == 0) {
+    cat("No alleles to flip, exiting loop.\n")
+    return(list(plots = list_plot, list_df = list_df, lambda = list_lambdaø))
+  }
+  cat("## Alleles to flip: ", length(id), "\n")
+
+  # allele flip loop ====
+  iteration_counter <- 1  # Initialize the counter for iterations
+  repeat {
+    # Print iteration number
+    cat("## Starting iteration: ", iteration_counter, "\n")
+
+    # id for flipping ====
+    id <- susieR::kriging_rss(
+      z = list_df$z,
+      R = list_df$LD,
+      n = list_df$N,
+      s = VAR_lambda)$conditional_dist
+    id <- which(id$logLR > 2 & abs(id$z) > 2)
+    # If no rows to flip, exit the loop and return the plots and list_df
+    if (length(id) == 0) {
+      cat("No alleles to flip, exiting loop.\n")
+      return(list(plots = list_plot, list_df = list_df, lambda = list_lambda))
+    }
+    cat("## Alleles to flip: ", length(id), "\n")
+
+    # flip alleles ====
+    df$BETA[id] <- -df$BETA[id]
+    cat("## alleles flipped \n")
+
+    # LD matrix ====
+    ld <- ieugwasr::ld_matrix_local(
+      df$SNP,
+      with_alleles = FALSE,
+      bfile = bfile,
+      plink_bin = plinkbinr::get_plink_exe()
+    )
+    # Check if the LD matrix has been created correctly
+    if (is.null(ld) || nrow(ld) == 0) {
+      stop("LD matrix is NULL or empty")
+    }
+    cat("## LD matrix made \n")
+
+    # list_df ====
+    list_df <- list(
+      beta = df$BETA,
+      varbeta = df$SE^2,
+      p = df$P,
+      N = min(df$N),
+      z = df$BETA / df$SE,
+      MAF = df$EAF,
+      LD = ld,
+      type = "quant",
+      snp = rownames(ld),
+      pos = df$POS,
+      phenotype = unique(df$phenotype)
+    )
+    cat("## list_df made \n")
+
+    # alignment plot ====
+    plot_alignment <- functions::coloc_check_alignment(D = list_df, do_plot = TRUE)
+    # Check if the alignment plot is not NULL
+    if (is.null(plot_alignment)) {
+      stop("Alignment plot is NULL")
+    }
+    cat("## plot_alignment made \n")
+    list_plot[[length(list_plot) + 1]] <- plot_alignment
+
+    # VAR_lambda ====
+    VAR_lambda <- susieR::estimate_s_rss(z = list_df$z,
+                                         R = list_df$LD,
+                                         n = list_df$N)
+    list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
+    cat("## VAR_lambda:", VAR_lambda, "\n")
+
+    # kriging_rss ====
+    res_kriging <- susieR::kriging_rss(
+      z = list_df$z,
+      R = list_df$LD,
+      n = list_df$N,
+      s = VAR_lambda)
+    # Check for NULL or empty values in the conditional distribution
+    if (is.null(res_kriging$conditional_dist)) {
+      stop("kriging_rss conditional distribution is NULL")
+    }
+    cat("## kriging_rss made \n")
+
+    # observed vs expected plot ====
+    plot_observed_expected <- res_kriging$plot +
+      ggplot2::labs(title = "Distribution of z-scores") +
+      ggplot2::labs(subtitle = paste0("Allele flipping iteration = ", iteration_counter, "; lambda = ", round(VAR_lambda,4)))
+    # Append the plot to the list
+    list_plot[[length(list_plot) + 1]] <- plot_observed_expected
+    cat("## plot_observed_expected made \n")
+
+    # iteration counter ====
+    iteration_counter <- iteration_counter + 1
+  }
+}

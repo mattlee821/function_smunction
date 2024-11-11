@@ -2,6 +2,7 @@
 
 export("%>%")
 export(FUNnormalization_residualMixedModels)
+export(alignment_check)
 export(biomaRt_getBM_batch)
 export(blank_plot)
 export(calculate_ICC)
