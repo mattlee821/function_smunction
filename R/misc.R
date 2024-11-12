@@ -263,7 +263,7 @@ alignment_check <- function(df, reference, bfile) {
                                        n = list_df$N)
   list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
   cat("## S:", VAR_lambda, "\n")
-  cat("### larger S indicates inconsistency between Z and LD matrix")
+  cat("### larger S indicates inconsistency between Z and LD matrix \n")
 
   # kriging_rss ====
   res_kriging <- susieR::kriging_rss(
@@ -374,7 +374,7 @@ alignment_check <- function(df, reference, bfile) {
                                          n = list_df$N)
     list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
     cat("## S:", VAR_lambda, "\n")
-    cat("### larger S indicates inconsistency between Z and LD matrix")
+    cat("### larger S indicates inconsistency between Z and LD matrix \n")
 
     # kriging_rss ====
     res_kriging <- susieR::kriging_rss(
