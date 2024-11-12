@@ -262,7 +262,8 @@ alignment_check <- function(df, reference, bfile) {
                                        R = list_df$LD,
                                        n = list_df$N)
   list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
-  cat("## VAR_lambda:", VAR_lambda, "\n")
+  cat("## S:", VAR_lambda, "\n")
+  cat("### larger S indicates inconsistency between Z and LD matrix")
 
   # kriging_rss ====
   res_kriging <- susieR::kriging_rss(
@@ -279,7 +280,7 @@ alignment_check <- function(df, reference, bfile) {
   # Create plot for observed vs expected ====
   plot_observed_expected <- res_kriging$plot +
     ggplot2::labs(title = "Distribution of z-scores") +
-    ggplot2::labs(subtitle = paste0("Before allele flipping; lambda = ", round(VAR_lambda,4)))
+    ggplot2::labs(subtitle = paste0("Before allele flipping; S = ", round(VAR_lambda,4)))
   # Append the plot to the list
   list_plot[[length(list_plot) + 1]] <- plot_observed_expected
   cat("## plot_observed_expected made \n")
@@ -290,7 +291,7 @@ alignment_check <- function(df, reference, bfile) {
   # If no rows to flip, exit the loop and return the plots and list_df
   if (length(id) == 0) {
     cat("No alleles to flip, exiting loop.\n")
-    return(list(plots = list_plot, list_df = list_df, lambda = list_lambdaø))
+    return(list(plots = list_plot, list_df = list_df, S = VAR_lambda))
   }
   cat("## Alleles to flip: ", length(id), "\n")
 
@@ -310,7 +311,7 @@ alignment_check <- function(df, reference, bfile) {
     # If no rows to flip, exit the loop and return the plots and list_df
     if (length(id) == 0) {
       cat("No alleles to flip, exiting loop.\n")
-      return(list(plots = list_plot, list_df = list_df, lambda = list_lambda))
+      return(list(plots = list_plot, list_df = list_df, S = list_lambda))
     }
     cat("## Alleles to flip: ", length(id), "\n")
 
@@ -372,7 +373,8 @@ alignment_check <- function(df, reference, bfile) {
                                          R = list_df$LD,
                                          n = list_df$N)
     list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
-    cat("## VAR_lambda:", VAR_lambda, "\n")
+    cat("## S:", VAR_lambda, "\n")
+    cat("### larger S indicates inconsistency between Z and LD matrix")
 
     # kriging_rss ====
     res_kriging <- susieR::kriging_rss(
@@ -398,3 +400,4 @@ alignment_check <- function(df, reference, bfile) {
     iteration_counter <- iteration_counter + 1
   }
 }
+
