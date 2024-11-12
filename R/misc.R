@@ -223,22 +223,33 @@ alignment_check <- function(df, reference, bfile) {
 
   # list_df ====
   list_df <- list(
-    beta = df$BETA,
-    varbeta = df$SE^2,
-    p = df$P,
-    N = min(df$N),
-    z = df$BETA / df$SE,
+    CHR = df$CHR,
+    POS = df$POS,
+    SNP = rownames(ld),
+    EA = df$EA,
+    OA = df$OA,
     MAF = df$EAF,
+    BETA = df$BETA,
+    SE = df$SE,
+    P = df$P,
+    varbeta = df$SE^2,
+    N = min(df$N),
+    phenotype = unique(df$phenotype),
+    Z = df$BETA / df$SE,
     LD = ld,
-    type = "quant",
-    snp = rownames(ld),
-    pos = df$POS,
-    phenotype = unique(df$phenotype)
+    type = "quant"
   )
   cat("## list_df made \n")
 
   # alignment plot ====
-  plot_alignment <- functions::coloc_check_alignment(D = list_df, do_plot = TRUE)
+  plot_alignment <- list_df %>%
+    purrr::set_names(~ case_when(
+      . == "SNP" ~ "snp",  # Rename SNP to snp
+      . == "P" ~ "p",      # Rename P to p
+      . == "BETA" ~ "beta",      # Rename P to p
+      TRUE ~ .              # Leave other names unchanged
+    )) %>%
+    functions::coloc_check_alignment(do_plot = TRUE)
   # Check if the alignment plot is not NULL
   if (is.null(plot_alignment)) {
     stop("Alignment plot is NULL")
@@ -247,7 +258,7 @@ alignment_check <- function(df, reference, bfile) {
   list_plot[[length(list_plot) + 1]] <- plot_alignment
 
   # VAR_lambda ====
-  VAR_lambda <- susieR::estimate_s_rss(z = list_df$z,
+  VAR_lambda <- susieR::estimate_s_rss(z = list_df$Z,
                                        R = list_df$LD,
                                        n = list_df$N)
   list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
@@ -255,7 +266,7 @@ alignment_check <- function(df, reference, bfile) {
 
   # kriging_rss ====
   res_kriging <- susieR::kriging_rss(
-    z = list_df$z,
+    z = list_df$Z,
     R = list_df$LD,
     n = list_df$N,
     s = VAR_lambda)
@@ -291,7 +302,7 @@ alignment_check <- function(df, reference, bfile) {
 
     # id for flipping ====
     id <- susieR::kriging_rss(
-      z = list_df$z,
+      z = list_df$Z,
       R = list_df$LD,
       n = list_df$N,
       s = VAR_lambda)$conditional_dist
@@ -322,22 +333,33 @@ alignment_check <- function(df, reference, bfile) {
 
     # list_df ====
     list_df <- list(
-      beta = df$BETA,
-      varbeta = df$SE^2,
-      p = df$P,
-      N = min(df$N),
-      z = df$BETA / df$SE,
+      CHR = df$CHR,
+      POS = df$POS,
+      SNP = rownames(ld),
+      EA = df$EA,
+      OA = df$OA,
       MAF = df$EAF,
+      BETA = df$BETA,
+      SE = df$SE,
+      P = df$P,
+      varbeta = df$SE^2,
+      N = min(df$N),
+      phenotype = unique(df$phenotype),
+      Z = df$BETA / df$SE,
       LD = ld,
-      type = "quant",
-      snp = rownames(ld),
-      pos = df$POS,
-      phenotype = unique(df$phenotype)
+      type = "quant"
     )
     cat("## list_df made \n")
 
     # alignment plot ====
-    plot_alignment <- functions::coloc_check_alignment(D = list_df, do_plot = TRUE)
+    plot_alignment <- list_df %>%
+      purrr::set_names(~ case_when(
+        . == "SNP" ~ "snp",  # Rename SNP to snp
+        . == "P" ~ "p",      # Rename P to p
+        . == "BETA" ~ "beta",      # Rename P to p
+        TRUE ~ .              # Leave other names unchanged
+      )) %>%
+      functions::coloc_check_alignment(do_plot = TRUE)
     # Check if the alignment plot is not NULL
     if (is.null(plot_alignment)) {
       stop("Alignment plot is NULL")
@@ -346,7 +368,7 @@ alignment_check <- function(df, reference, bfile) {
     list_plot[[length(list_plot) + 1]] <- plot_alignment
 
     # VAR_lambda ====
-    VAR_lambda <- susieR::estimate_s_rss(z = list_df$z,
+    VAR_lambda <- susieR::estimate_s_rss(z = list_df$Z,
                                          R = list_df$LD,
                                          n = list_df$N)
     list_lambda[[length(list_lambda) + 1]] <- VAR_lambda
@@ -354,7 +376,7 @@ alignment_check <- function(df, reference, bfile) {
 
     # kriging_rss ====
     res_kriging <- susieR::kriging_rss(
-      z = list_df$z,
+      z = list_df$Z,
       R = list_df$LD,
       n = list_df$N,
       s = VAR_lambda)
