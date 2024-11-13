@@ -50,3 +50,64 @@ finemap_pval_LD <- function(df, bfile, pval_threshold = 5E-8, clump_r2 = 0.001) 
     }
   })
 }
+
+#' Create a Table of Credible Sets from SusieR Model
+#'
+#' This function processes a `susieR` model object to extract the SNPs and their corresponding Posterior Inclusion Probabilities (PIP) for each credible set. It also includes a list of other SNPs in the same credible set.
+#'
+#' @param model A `susieR` model object, which includes the following components:
+#' \itemize{
+#'   \item \code{sets} A list containing credible sets, where each set is represented by indices of SNPs.
+#'   \item \code{X_column_scale_factors} A vector of SNP identifiers (e.g., SNP names).
+#'   \item \code{pip} A named vector of Posterior Inclusion Probability (PIP) values, indexed by SNP names.
+#' }
+#' @return A tibble (data frame) containing the following columns:
+#' \itemize{
+#'   \item \code{SNP} The SNP identifiers for each SNP in the credible set.
+#'   \item \code{PIP} The Posterior Inclusion Probability for each SNP.
+#'   \item \code{cs_snps} A string listing the other SNPs in the same credible set (NA if only one SNP).
+#'   \item \code{test} The label "susie", indicating the test used for generating the table.
+#' }
+#' @examples
+#' \dontrun{
+#'   result <- susieR_cs_table(susie_model)
+#'   print(result)
+#' }
+#' @export
+susieR_cs_table <- function(model) {
+  # Extract the credible set list from the model object
+  cs_list <- model$sets$cs
+
+  # Extract SNP IDs and PIP values for each credible set
+  credible_sets <- purrr::map(cs_list, ~ {
+    # Extract the SNP indices for each credible set
+    snp_indices <- .x
+
+    # Get the corresponding SNP IDs (assumes that the SNP IDs are the names of the vectors, based on your structure)
+    snp_ids <- names(model$X_column_scale_factors)[snp_indices]
+
+    # Get the corresponding PIP values for these SNPs
+    pip_values <- model$pip[snp_ids]
+
+    # If there is more than one SNP in the set, list the other SNPs
+    other_snps <- if (length(snp_ids) > 1) {
+      # For each SNP, list other SNPs in the same set
+      purrr::map(snp_ids, ~ paste(setdiff(snp_ids, .x), collapse = ", "))
+    } else {
+      # If only one SNP, set to NA
+      rep(NA, length(snp_ids))
+    }
+
+    tibble::tibble(
+      SNP = snp_ids,
+      PIP = pip_values,
+      cs_snps = unlist(other_snps),
+      test = "susie"  # Adding the 'test' column with value "susie"
+    )
+  })
+
+  # Combine the list of tibbles into one dataframe
+  result_df <- dplyr::bind_rows(credible_sets)
+
+  return(result_df)
+}
