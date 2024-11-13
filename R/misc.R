@@ -400,4 +400,3 @@ alignment_check <- function(df, reference, bfile) {
     iteration_counter <- iteration_counter + 1
   }
 }
-
