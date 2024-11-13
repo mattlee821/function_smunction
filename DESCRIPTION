@@ -11,7 +11,7 @@ LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 Imports:
-  dplyr, forcats, ggplot2, tibble, tidyr,
+  dplyr, forcats, ggplot2, tibble, tidyr, purrr,
   plyr,
   magrittr,
   data.table,
@@ -28,14 +28,15 @@ Suggests:
   wesanderson,ggforestplot,scales,calibrate,cowplot,reshape2,ggrepel,locuscomparer,
   haven,readstata13,readxl,GGally,bigutilsr,impute,imputeLCMD,missForest,
   missMethods,pcaMethods,viridis,doParallel,foreach,car,lmtest,clusterProfiler,hglm,lme4,nlme,
-  biomaRt
+  biomaRt,checkmate,gginards
 Remotes:
   NightingaleHealth/ggforestplot,
   MRCIEU/genetics.binaRies,
   MRCIEU/gwasvcf,
   MRCIEU/TwoSampleMR,
   MRCIEU/ieugwasr,
-  boxiangliu/locuscomparer
+  boxiangliu/locuscomparer,
+  aphalo/gginnards
 Files:
   inst/doc/imputation-test.qmd
 Depends: 
