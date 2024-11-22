@@ -28,7 +28,7 @@ Suggests:
   wesanderson,ggforestplot,scales,calibrate,cowplot,reshape2,ggrepel,locuscomparer,
   haven,readstata13,readxl,GGally,bigutilsr,impute,imputeLCMD,missForest,
   missMethods,pcaMethods,viridis,doParallel,foreach,car,lmtest,clusterProfiler,hglm,lme4,nlme,
-  biomaRt,checkmate,gginards
+  biomaRt,checkmate
 Remotes:
   NightingaleHealth/ggforestplot,
   MRCIEU/genetics.binaRies,
