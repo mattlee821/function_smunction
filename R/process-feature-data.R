@@ -71,9 +71,9 @@ process_data <- function(
 
   # df and VAR checks ====
   ## Check if specified columns exist in the data frames
-  process_data_data_check(data = df,
-                          data_meta_features = df_features,
-                          data_meta_samples = df_samples,
+  process_data_data_check(data = data,
+                          data_meta_features = data_meta_features,
+                          data_meta_samples = data_meta_samples,
                           col_samples = col_samples,
                           col_features = col_features,
                           exclusion_extreme_feature = exclusion_extreme_feature,
@@ -84,10 +84,10 @@ process_data <- function(
                           missing_pct_sample = missing_pct_sample)
 
   # make df ====
-  df <- df %>%
+  df <- data %>%
     tibble::column_to_rownames(col_samples)
-  df_samples <- tibble::as_tibble(df_samples)
-  df_features <- tibble::as_tibble(df_features)
+  df_samples <- tibble::as_tibble(data_meta_samples)
+  df_features <- tibble::as_tibble(data_meta_features)
 
   # make labels ====
   labels <- process_data_generate_labels(exclusion_extreme_feature = exclusion_extreme_feature,
