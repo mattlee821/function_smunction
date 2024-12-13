@@ -61,74 +61,77 @@ finemap_pval_LD <- function(df, bfile, pval_threshold = 5E-8, clump_r2 = 0.001) 
 #'   \item \code{X_column_scale_factors} A vector of SNP identifiers (e.g., SNP names).
 #'   \item \code{pip} A named vector of Posterior Inclusion Probability (PIP) values, indexed by SNP names.
 #' }
+#' @param df A data frame containing SNP information, with the following columns:
+#' \itemize{
+#'   \item \code{SNP} The SNP identifiers.
+#'   \item \code{POS} The position of each SNP.
+#'   \item \code{P} The p-value associated with each SNP.
+#' }
 #' @return A tibble (data frame) containing the following columns:
 #' \itemize{
-#'   \item \code{SNP} The SNP identifiers
+#'   \item \code{SNP} The SNP identifiers.
+#'   \item \code{POS} The position of each SNP.
+#'   \item \code{P} The p-value for each SNP.
 #'   \item \code{PIP} The Posterior Inclusion Probability for each SNP.
 #'   \item \code{cs_snps} A string listing the other SNPs in the same credible set (NA if only one SNP).
 #'   \item \code{cs} The credible set identifier, represented as a factor.
-#'   \item \code{test} The label "susie", indicating the test used for generating the table.
+#'   \item \code{test} A string indicating the test used for generating the table (always "susie").
 #'   \item \code{label} The SNP identifier for the SNP with the highest PIP value within each credible set (NA for other SNPs).
 #' }
 #' @examples
 #' \dontrun{
-#'   result <- susieR_cs_table(susie_model)
+#'   result <- susieR_cs_table(susie_model, df)
 #'   print(result)
 #' }
 #' @export
-susieR_cs_table <- function(susieR_model) {
+susieR_cs_table <- function(susieR_model, df) {
   # Extract the credible sets
   cs_list <- susieR_model$sets$cs
+  pip <- data.frame(SNP = names(susieR_model$pip), pip_value = susieR_model$pip)
 
-  # Process each credible set
-  credible_sets <- purrr::map(cs_list, ~{
-    snp_indices <- .x
-    snp_ids <- names(susieR_model$X_column_scale_factors)[snp_indices]
-    pip_values <- susieR_model$pip[snp_ids]
+  table <- data.frame(
+    SNP = df$SNP,
+    POS = df$POS,
+    P = df$P
+  ) %>%
+    left_join(pip, by = "SNP")
 
-    # Get other SNPs (exclude the current SNP from the list)
-    other_snps <- if (length(snp_ids) > 1) {
-      purrr::map(snp_ids, ~paste(setdiff(snp_ids, .x), collapse = ", "))
-    } else {
-      rep(NA, length(snp_ids))
-    }
+  # Initialize the `cs` column to store credible set labels
+  table$cs <- NA
 
-    # Return a tibble with the SNPs and corresponding PIP values
-    tibble::tibble(SNP = snp_ids, PIP = pip_values, cs_snps = unlist(other_snps), test = "susie")
-  })
-
-  # Combine all credible sets into one dataframe and add the `cs` label
-  df <- purrr::imap_dfr(credible_sets, ~{
-    .x %>%
-      # Create the `cs` column
-      dplyr::mutate(cs = as.factor(.y)) %>%
-      # Group by `cs` to find the max PIP for each group
-      dplyr::group_by(cs) %>%
-      # Create the label only for the row with the highest PIP value
-      dplyr::mutate(label = if_else(PIP == max(PIP), SNP, NA_character_)) %>%
-      # Ungroup to avoid issues with further operations
-      dplyr::ungroup()
-  })
-
-  # Prepare the table for `table_susie`
-  snp_ids <- names(susieR_model$X_column_scale_factors)
-  pip_values <- susieR_model$pip[snp_ids]
-  other_snps <- if (length(snp_ids) > 1) {
-    purrr::map(snp_ids, ~paste(setdiff(snp_ids, .x), collapse = ", "))
-  } else {
-    rep(NA, length(snp_ids))
+  # Assign credible set labels (e.g., "L1", "L2") to the `cs` column
+  for (i in seq_along(cs_list)) {
+    row_indices <- cs_list[[i]]  # Extract row numbers for this list item
+    table$cs[row_indices] <- paste0("L", i)  # Assign the label to these rows
   }
 
-  table_susie <- tibble::tibble(SNP = snp_ids, PIP = pip_values, test = "susie")
+  # Initialize the `cs_snps` column to store SNPs in the same credible set
+  table$cs_snps <- NA
 
-  # Combine `df` with `table_susie`
-  finemap_susie_table <- table_susie %>%
-    left_join(df, by = "SNP") %>%
-    select(SNP, PIP.x, cs_snps, cs, test.x, label) %>%
-    rename(PIP = PIP.x,
-           test = test.x)
+  # Populate the `cs_snps` column with comma-separated SNPs in the same credible set
+  for (i in seq_along(cs_list)) {
+    row_indices <- cs_list[[i]]  # Row indices for the current credible set
+    snps <- table$SNP[row_indices]  # Extract SNP values for these rows
 
-  return(finemap_susie_table)
+    # Assign concatenated SNPs excluding the current SNP for each row
+    for (row in row_indices) {
+      other_snps <- setdiff(snps, table$SNP[row])
+      if (length(other_snps) > 0) {
+        table$cs_snps[row] <- paste(other_snps, collapse = ", ")
+      }
+    }
+  }
+
+  # Add a label for the SNP with the smallest p-value in each credible set
+  table <- table %>%
+    dplyr::filter(!is.na(cs)) %>% # Exclude rows where cs is NA
+    dplyr::group_by(cs) %>%
+    dplyr::mutate(label = if_else(P == min(P), SNP, NA_character_)) %>%  # Identify SNP with smallest p-value
+    dplyr::ungroup() %>%
+    dplyr::bind_rows(table %>% dplyr::filter(is.na(cs))) # Add back rows with NA cs
+
+  # Return the final table
+  return(table)
 }
 
 #' Create a Table of Credible Sets from Finimom Model
@@ -163,7 +166,7 @@ finimom_cs_table <- function(finimom_model, df) {
   cs_list <- finimom_model$sets
 
   # Create the initial table with SNP details and PIP values
-  finemap_finimom_table <- data.frame(
+  table <- data.frame(
     SNP = df$SNP,  # SNP identifiers
     POS = df$POS,  # SNP positions
     P = df$P,      # SNP p-values
@@ -171,35 +174,37 @@ finimom_cs_table <- function(finimom_model, df) {
   )
 
   # Initialize the `cs` column to store credible set labels
-  finemap_finimom_table$cs <- NA
+  table$cs <- NA
 
   # Assign credible set labels (e.g., "L1", "L2") to the `cs` column
   for (i in seq_along(cs_list)) {
     row_indices <- cs_list[[i]]  # Extract row numbers for this list item
-    finemap_finimom_table$cs[row_indices] <- paste0("L", i)  # Assign the label to these rows
+    table$cs[row_indices] <- paste0("L", i)  # Assign the label to these rows
   }
 
   # Initialize the `cs_snps` column to store SNPs in the same credible set
-  finemap_finimom_table$cs_snps <- NA
+  table$cs_snps <- NA
 
   # Populate the `cs_snps` column with comma-separated SNPs in the same credible set
   for (i in seq_along(cs_list)) {
     row_indices <- cs_list[[i]]  # Row indices for the current credible set
-    snps <- finemap_finimom_table$SNP[row_indices]  # Extract SNP values for these rows
+    snps <- table$SNP[row_indices]  # Extract SNP values for these rows
 
     # Assign concatenated SNPs excluding the current SNP for each row
     for (row in row_indices) {
-      finemap_finimom_table$cs_snps[row] <- paste(setdiff(snps, finemap_finimom_table$SNP[row]), collapse = ", ")
+      table$cs_snps[row] <- paste(setdiff(snps, table$SNP[row]), collapse = ", ")
     }
   }
 
   # Add a label for the SNP with the smallest p-value in each credible set
-  finemap_finimom_table <- finemap_finimom_table %>%
+  table <- table %>%
+    dplyr::filter(!is.na(cs)) %>% # Exclude rows where cs is NA
     dplyr::group_by(cs) %>%
     dplyr::mutate(label = if_else(P == min(P), SNP, NA_character_)) %>%  # Identify SNP with smallest p-value
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    dplyr::bind_rows(table %>% dplyr::filter(is.na(cs))) # Add back rows with NA cs
 
   # Return the final table
-  return(finemap_finimom_table)
+  return(table)
 }
 

@@ -4,7 +4,7 @@
 \alias{susieR_cs_table}
 \title{Create a Table of Credible Sets from SusieR Model}
 \usage{
-susieR_cs_table(susieR_model)
+susieR_cs_table(susieR_model, df)
 }
 \arguments{
 \item{susieR_model}{A \code{susieR} model object, which includes the following components:
@@ -13,15 +13,24 @@ susieR_cs_table(susieR_model)
 \item \code{X_column_scale_factors} A vector of SNP identifiers (e.g., SNP names).
 \item \code{pip} A named vector of Posterior Inclusion Probability (PIP) values, indexed by SNP names.
 }}
+
+\item{df}{A data frame containing SNP information, with the following columns:
+\itemize{
+\item \code{SNP} The SNP identifiers.
+\item \code{POS} The position of each SNP.
+\item \code{P} The p-value associated with each SNP.
+}}
 }
 \value{
 A tibble (data frame) containing the following columns:
 \itemize{
-\item \code{SNP} The SNP identifiers
+\item \code{SNP} The SNP identifiers.
+\item \code{POS} The position of each SNP.
+\item \code{P} The p-value for each SNP.
 \item \code{PIP} The Posterior Inclusion Probability for each SNP.
 \item \code{cs_snps} A string listing the other SNPs in the same credible set (NA if only one SNP).
 \item \code{cs} The credible set identifier, represented as a factor.
-\item \code{test} The label "susie", indicating the test used for generating the table.
+\item \code{test} A string indicating the test used for generating the table (always "susie").
 \item \code{label} The SNP identifier for the SNP with the highest PIP value within each credible set (NA for other SNPs).
 }
 }
@@ -30,7 +39,7 @@ This function processes a \code{susieR} model object to extract the SNPs and the
 }
 \examples{
 \dontrun{
-  result <- susieR_cs_table(susie_model)
+  result <- susieR_cs_table(susie_model, df)
   print(result)
 }
 }
