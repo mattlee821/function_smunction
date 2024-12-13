@@ -130,3 +130,76 @@ susieR_cs_table <- function(susieR_model) {
 
   return(finemap_susie_table)
 }
+
+#' Create a Table of Credible Sets from Finimom Model
+#'
+#' This function processes a Finimom model to generate a table summarizing credible sets,
+#' their associated SNPs, positions, and posterior inclusion probabilities (PIPs).
+#' Additionally, it identifies the SNP with the smallest p-value in each credible set.
+#'
+#' @param finimom_model A Finimom model object containing credible sets and PIPs.
+#' @param df A data frame containing SNP information with columns:
+#'   \describe{
+#'     \item{SNP}{Character vector of SNP identifiers.}
+#'     \item{POS}{Numeric vector of SNP positions.}
+#'     \item{P}{Numeric vector of p-values.}
+#'   }
+#'
+#' @return A data frame summarizing the credible sets with the following columns:
+#' \itemize{
+#'   \item SNP: SNP identifier.
+#'   \item POS: SNP position.
+#'   \item P: SNP p-value.
+#'   \item PIP: Posterior inclusion probability for the SNP.
+#'   \item cs: Credible set label (e.g., "L1", "L2").
+#'   \item cs_snps: Comma-separated list of other SNPs in the same credible set.
+#'   \item label: SNP identifier of the SNP with the smallest p-value in each credible set.
+#' }
+#'
+#' @export
+finimom_cs_table <- function(finimom_model, df) {
+
+  # Extract the credible sets from the Finimom model
+  cs_list <- finimom_model$sets
+
+  # Create the initial table with SNP details and PIP values
+  finemap_finimom_table <- data.frame(
+    SNP = df$SNP,  # SNP identifiers
+    POS = df$POS,  # SNP positions
+    P = df$P,      # SNP p-values
+    PIP = finimom_model$pip  # Posterior inclusion probabilities
+  )
+
+  # Initialize the `cs` column to store credible set labels
+  finemap_finimom_table$cs <- NA
+
+  # Assign credible set labels (e.g., "L1", "L2") to the `cs` column
+  for (i in seq_along(cs_list)) {
+    row_indices <- cs_list[[i]]  # Extract row numbers for this list item
+    finemap_finimom_table$cs[row_indices] <- paste0("L", i)  # Assign the label to these rows
+  }
+
+  # Initialize the `cs_snps` column to store SNPs in the same credible set
+  finemap_finimom_table$cs_snps <- NA
+
+  # Populate the `cs_snps` column with comma-separated SNPs in the same credible set
+  for (i in seq_along(cs_list)) {
+    row_indices <- cs_list[[i]]  # Row indices for the current credible set
+    snps <- finemap_finimom_table$SNP[row_indices]  # Extract SNP values for these rows
+
+    # Assign concatenated SNPs excluding the current SNP for each row
+    for (row in row_indices) {
+      finemap_finimom_table$cs_snps[row] <- paste(setdiff(snps, finemap_finimom_table$SNP[row]), collapse = ", ")
+    }
+  }
+
+  # Add a label for the SNP with the smallest p-value in each credible set
+  finemap_finimom_table <- finemap_finimom_table %>%
+    dplyr::group_by(cs) %>%
+    dplyr::mutate(label = if_else(P == min(P), SNP, NA_character_)) %>%  # Identify SNP with smallest p-value
+    dplyr::ungroup()
+
+  # Return the final table
+  return(finemap_finimom_table)
+}
+
