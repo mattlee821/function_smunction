@@ -87,7 +87,7 @@ finemap_pval_LD <- function(df, bfile, pval_threshold = 5E-8, clump_r2 = 0.001) 
 susieR_cs_table <- function(susieR_model, df) {
   # Extract the credible sets
   cs_list <- susieR_model$sets$cs
-  PIP <- data.frame(SNP = names(susieR_model$pip), pip_value = susieR_model$pip)
+  PIP <- data.frame(SNP = names(susieR_model$pip), PIP = susieR_model$pip)
 
   table <- data.frame(
     SNP = df$SNP,
