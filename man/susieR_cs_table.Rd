@@ -4,10 +4,10 @@
 \alias{susieR_cs_table}
 \title{Create a Table of Credible Sets from SusieR Model}
 \usage{
-susieR_cs_table(model)
+susieR_cs_table(susieR_model)
 }
 \arguments{
-\item{model}{A \code{susieR} model object, which includes the following components:
+\item{susieR_model}{A \code{susieR} model object, which includes the following components:
 \itemize{
 \item \code{sets} A list containing credible sets, where each set is represented by indices of SNPs.
 \item \code{X_column_scale_factors} A vector of SNP identifiers (e.g., SNP names).
@@ -17,14 +17,16 @@ susieR_cs_table(model)
 \value{
 A tibble (data frame) containing the following columns:
 \itemize{
-\item \code{SNP} The SNP identifiers for each SNP in the credible set.
+\item \code{SNP} The SNP identifiers
 \item \code{PIP} The Posterior Inclusion Probability for each SNP.
 \item \code{cs_snps} A string listing the other SNPs in the same credible set (NA if only one SNP).
+\item \code{cs} The credible set identifier, represented as a factor.
 \item \code{test} The label "susie", indicating the test used for generating the table.
+\item \code{label} The SNP identifier for the SNP with the highest PIP value within each credible set (NA for other SNPs).
 }
 }
 \description{
-This function processes a \code{susieR} model object to extract the SNPs and their corresponding Posterior Inclusion Probabilities (PIP) for each credible set. It also includes a list of other SNPs in the same credible set.
+This function processes a \code{susieR} model object to extract the SNPs and their corresponding Posterior Inclusion Probabilities (PIP) for each credible set. It also includes a list of other SNPs in the same credible set, ensuring that only the SNP with the highest PIP in each credible set receives a label in the \code{label} column.
 }
 \examples{
 \dontrun{
