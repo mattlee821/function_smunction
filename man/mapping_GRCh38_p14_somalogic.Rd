@@ -20,6 +20,7 @@ A data frame with the following columns:
 \item{entrezgene_accession}{entrez gene symbol mapped by me from biomart using ensembl}
 \item{hgnc_id}{hgnc gene ID mapped by me from biomart using ensembl}
 \item{hgnc_symbol}{hgnc gene symbol ID mapped by me from biomart using ensembl}
+\item{ensembl_gene_id}{ensemble stable gene ID mapped by me from biomart using ensembl}
 \item{external_gene_name}{external gene name (unsure really as description from biomart isnt good) mapped by me from biomart using ensembl}
 \item{gene_biotype}{gene type (restricted to protein-coding) mapped by me from biomart using ensembl}
 \item{CHR}{chromosome the gene is on mapped by me from TxDb.Hsapiens.UCSC.hg19.knownGene}
