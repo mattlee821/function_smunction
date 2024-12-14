@@ -94,7 +94,7 @@ biomaRt_getBM_batch <- function(mart, attributes, filters, values, chunk_size) {
 # wget https://github.com/SomaLogic/SomaLogic-Data/raw/main/example_data.adat # Retrieve just the 5k (v4.0) ADAT
 # wget https://github.com/SomaLogic/SomaLogic-Data/raw/main/example_data_v4.1_plasma.adat # Retrieve just the 7k (v4.1) ADAT
 # wget https://github.com/SomaLogic/SomaLogic-Data/raw/main/example_data_v5.0_plasma.adat # Retrieve just the 11k (v5.0) ADAT
-data <- SomaDataIO::read_adat("/Users/leem/Downloads/example_data_v5.0_plasma.adat")
+data <- SomaDataIO::read_adat("inst/data/example_data_v5.0_plasma.adat")
 data <- SomaDataIO::getAnalyteInfo(data)
 
 ## format data
@@ -163,16 +163,43 @@ map_hgnc <- biomaRt_getBM_batch(
   chunk_size = 2
 )
 
+# ensemble primary id ====
+ensembl_uniprot <- getBM(
+  attributes = c("uniprot_gn_id", "ensembl_gene_id", "chromosome_name"),
+  filters = "uniprot_gn_id",
+  values = id_uniprot_id,
+  mart = mart
+)
+
+ensembl_entrez <- getBM(
+  attributes = c("entrezgene_id", "ensembl_gene_id", "chromosome_name"),
+  filters = "entrezgene_id",
+  values = as.integer(id_entrez_id),
+  mart = mart
+)
+
+ensembl_hgnc <- getBM(
+  attributes = c("hgnc_symbol", "ensembl_gene_id", "chromosome_name"),
+  filters = "hgnc_symbol",
+  values = id_hgnc_id,
+  mart = mart
+)
+
+map_ensembl <- full_join(ensembl_uniprot, ensembl_entrez, by = c("ensembl_gene_id", "chromosome_name")) %>%
+  full_join(ensembl_hgnc, by = c("ensembl_gene_id", "chromosome_name")) %>%
+  filter(chromosome_name %in% c(as.character(1:22), "X", "Y"))
+
 # combine maps ====
 map <- rbind(map_uniprot,
              map_entrez,
              map_hgnc) %>%
   dplyr::distinct()
 
+map <- full_join(map, map_ensembl)
+
 counts <- map %>%
   summarise(across(everything(), ~ sum(is.na(.) | . == ""))) %>%
   tidyr::pivot_longer(cols = everything(), names_to = "Column", values_to = "MissingCount")
-
 
 # positions ====
 ## hg19 ====
@@ -252,10 +279,14 @@ columns <- c(
   "SeqId", "SomaId", "UNIPROT", "Target", "TargetFullName", "EntrezGeneID", "EntrezGeneSymbol",
   "uniprot_gn_id", "uniprot_gn_symbol",
   "entrezgene_id","entrezgene_accession",
-  "hgnc_id", "hgnc_symbol", "external_gene_name","gene_biotype",
+  "hgnc_id", "hgnc_symbol", "ensembl_gene_id", "external_gene_name","gene_biotype",
   "CHR", "START_hg19", "END_hg19", "strand_hg19","START_hg38", "END_hg38", "strand_hg38"
 )
 data_map <- data_map[, columns]
+
+counts <- data_map %>%
+  summarise(across(everything(), ~ sum(is.na(.) | . == ""))) %>%
+  tidyr::pivot_longer(cols = everything(), names_to = "Column", values_to = "MissingCount")
 
 ## write
 write.table(x = data_map,

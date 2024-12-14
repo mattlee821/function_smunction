@@ -92,7 +92,7 @@ biomaRt_getBM_batch <- function(mart, attributes, filters, values, chunk_size) {
 
 # data ====
 # HT panel - https://view-su3.highspot.com/viewer/1ca88054dbbf92809402c590b5cb8b39 - i got a csv directly from olink
-data <- readxl::read_xlsx("/Users/leem/OneDrive - International Agency for Research on Cancer/001_projects/functions/inst/data/Olink Explore HT_Assay list_2024-10-31.xlsx", skip = 6)
+data <- readxl::read_xlsx("inst/data/Olink_Explore_HT_Assay_list_2024-10-31.xlsx", skip = 6)
 
 ## format data
 data <- data %>%
@@ -144,10 +144,30 @@ map_hgnc <- biomaRt_getBM_batch(
   chunk_size = 2
 )
 
+# ensemble primary id ====
+ensembl_uniprot <- getBM(
+  attributes = c("uniprot_gn_id", "ensembl_gene_id", "chromosome_name"),
+  filters = "uniprot_gn_id",
+  values = id_uniprot_id,
+  mart = mart
+)
+
+ensembl_hgnc <- getBM(
+  attributes = c("hgnc_symbol", "ensembl_gene_id", "chromosome_name"),
+  filters = "hgnc_symbol",
+  values = id_hgnc_id,
+  mart = mart
+)
+
+map_ensembl <- full_join(ensembl_uniprot, ensembl_hgnc, by = c("ensembl_gene_id", "chromosome_name")) %>%
+  filter(chromosome_name %in% c(as.character(1:22), "X", "Y"))
+
 # combine maps ====
 map <- rbind(map_uniprot,
              map_hgnc) %>%
   dplyr::distinct()
+
+map <- full_join(map, map_ensembl)
 
 counts <- map %>%
   summarise(across(everything(), ~ sum(is.na(.) | . == ""))) %>%
@@ -226,10 +246,14 @@ columns <- c(
   "olinkID", "UNIPROT", "Target","TargetFullName",
   "uniprot_gn_id", "uniprot_gn_symbol",
   "entrezgene_id", "entrezgene_accession",
-  "hgnc_id", "hgnc_symbol", "external_gene_name", "gene_biotype",
+  "hgnc_id", "hgnc_symbol", "ensembl_gene_id", "external_gene_name","gene_biotype",
   "CHR", "START_hg19", "END_hg19", "strand_hg19", "START_hg38", "END_hg38", "strand_hg38"
 )
 data_map <- data_map[, columns]
+
+counts <- data_map %>%
+  summarise(across(everything(), ~ sum(is.na(.) | . == ""))) %>%
+  tidyr::pivot_longer(cols = everything(), names_to = "Column", values_to = "MissingCount")
 
 ## write
 write.table(x = data_map,
