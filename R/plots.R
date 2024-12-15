@@ -24,7 +24,6 @@
 #' @param plot_recombination Logical - Include a secondary y-axis of recombination rate within the region of interest
 #' @param plot_title A character string corresponding to plot title (default = NULL)
 #' @param plot_subtitle A character string corresponding to plot subtitle (default = NULL)
-#' @param path Character string (default = NULL) - if a path is supplied a .pdf of the plot will be saved
 #' @param trait (optional) Column containing the name of the trait
 #' @param label Labels for SNPs to highlight (optional).
 #'
@@ -41,27 +40,26 @@
 #'
 #' @export
 gg_locusplot <- function(df,
-                            lead_snp = NULL,
-                            rsid = rsid,
-                            chrom = chrom,
-                            pos = pos,
-                            ref = ref,
-                            alt = alt,
-                            effect = NULL,
-                            std_err = NULL,
-                            p_value = p_value,
-                            trait = NULL,
-                            plot_pvalue_threshold = 0.1,
-                            plot_subsample_prop = 0.25,
-                            plot_distance = 500000,
-                            genome_build = "GRCh37",
-                            population = "ALL",
-                            plot_genes = FALSE,
-                            plot_recombination = FALSE,
-                            plot_title = NULL,
-                            plot_subtitle = NULL,
-                            path = NULL,
-                            label = NULL) {
+                         lead_snp = NULL,
+                         rsid = rsid,
+                         chrom = chrom,
+                         pos = pos,
+                         ref = ref,
+                         alt = alt,
+                         effect = NULL,
+                         std_err = NULL,
+                         p_value = p_value,
+                         trait = NULL,
+                         plot_pvalue_threshold = 0.1,
+                         plot_subsample_prop = 0.25,
+                         plot_distance = 500000,
+                         genome_build = "GRCh37",
+                         population = "EUR",
+                         plot_genes = FALSE,
+                         plot_recombination = FALSE,
+                         plot_title = NULL,
+                         plot_subtitle = NULL,
+                         label = NULL) {
   # Check input arguments to ensure they are of the correct type and within reasonable ranges
   checkmate::assert_data_frame(df)
   # checkmate::assert_string(lead_snp)
@@ -72,8 +70,6 @@ gg_locusplot <- function(df,
   if (!is.null(label)) {
     checkmate::assert_character(label)
   }
-
-  # trait <- rlang::enquo(trait)
 
   if(!rlang::quo_is_null(rlang::enquo(effect)) & !rlang::quo_is_null(rlang::enquo(std_err))) {
     checkmate::assert_numeric(df %>% pull({{ effect }}))
@@ -108,7 +104,6 @@ gg_locusplot <- function(df,
       tidyr::drop_na()
   }
 
-
   # Create df containing information about lead SNP (by default, select SNP with lowest p-value, otherwise take user-supplied value)
   if (is.null(lead_snp)) {
     indep_snps <- df %>%
@@ -124,9 +119,6 @@ gg_locusplot <- function(df,
 
     cli::cli_alert_info("Lead snp not present in supplied locus data. Defaulting to {indep_snps$lead_rsid} - {indep_snps$lead_chromosome}:{indep_snps$lead_position}, which has the lowest p-value in the region")
   } else {
-    # Ensure lead_snp supplied by user is a string
-    # checkmate::assert_string(lead_snp)
-
     indep_snps <- df %>%
       select(lead_rsid = rsid, lead_chromosome = chromosome, lead_position = position, lead_ref = ref, lead_alt = alt) %>%
       filter(lead_rsid == lead_snp) %>%
@@ -151,7 +143,7 @@ gg_locusplot <- function(df,
 
   # Create dataframe with variants at locus, LD information, color codes, and labels in preparation for plotting
   if (!(is.null(ld_extracted))) {
-    # Join GWAS locus df with LD information
+    # Join locus df with LD information
     locus_snps_ld <- ld_extracted %>%
       select(chromosome = chromosome2, position = position2, variant2, correlation) %>%
       mutate(chromosome = as.numeric(chromosome), position = as.numeric(position)) %>%
@@ -261,11 +253,6 @@ gg_locusplot <- function(df,
       axis.title.y = ggtext::element_markdown()
     )
 
-  if (!rlang::quo_is_null(enquo(trait))) {
-    regional_assoc_plot <- regional_assoc_plot +
-      facet_grid(rows = vars(trait), scales = "free_y")
-  }
-
   if (plot_recombination) {
     cli::cli_alert_info("Extracting recombination rates for the region {indep_snps$lead_chromosome}:{indep_snps$lead_position - plot_distance/2}-{indep_snps$lead_position + plot_distance/2}")
     ylim <- max(pull(locus_snps_ld, log10_pval), na.rm = TRUE) +
@@ -313,15 +300,6 @@ gg_locusplot <- function(df,
     ), nrow = 2, heights = c(3, 1))))
   }
 
-  # Return +/- save ggplot object
-  if (!is.null(path)) {
-    ggsave(regional_assoc_plot, filename = paste0(path, stringr::str_replace_all(unique(indep_snps$lead_rsid), "[^[:alnum:]]", "_"), ".pdf"), units = "in", height = 8.5, width = 11, device = "pdf")
-  }
-  # } else {
-  #   ggsave(regional_assoc_plot, filename = paste0(path, stringr::str_replace_all(unique(indep_snps$lead_rsid), "[^[:alnum:]]", "_"), ".pdf"), units = "in", height = 8.5, width = 11, device = "pdf")
-  #   return(regional_assoc_plot)
-  # }
-
   return(regional_assoc_plot)
 }
 
@@ -344,6 +322,7 @@ gg_locusplot <- function(df,
 #' @param pos The column name that contains the SNP positions.
 #' @param p_value The column name containing the p-values for each SNP.
 #' @param label A character vector of SNPs to label on the plot. Default is `NULL`.
+#' @param labels Logical for whether to show text labels for `label` SNPs
 #' @param trait The trait associated with the SNP. Default is `NULL`.
 #' @param plot_pvalue_threshold The p-value threshold for plotting. SNPs with p-values greater than this threshold are excluded from the plot. Default is `0.1`.
 #' @param genome_build The genome build used for the data (e.g., "GRCh38"). Default is `"GRCh38"`.
@@ -372,6 +351,7 @@ gg_regionplot <- function(df,
                           pos,
                           p_value,
                           label = NULL,
+                          labels = TRUE,
                           trait = NULL,
                           plot_pvalue_threshold = 0.1,
                           genome_build = "GRCh38",
@@ -379,19 +359,19 @@ gg_regionplot <- function(df,
                           plot_title = NULL,
                           plot_subtitle = NULL) {
 
-  # df ====
+  # Process and clean input dataframe ====
   df <- df %>%
-    mutate(log10_pval = -log10(df[[p_value]])) %>%  # Correct the reference to p_value
+    mutate(log10_pval = -log10(df[[p_value]])) %>%  # Compute -log10(p-value)
     dplyr::select(rsid = SNP, chromosome = CHR, position = pos, ref = EA, alt = OA, log10_pval, trait = phenotype) %>%
     dplyr::mutate(dplyr::across(where(is.factor), as.character)) %>%  # Convert factor columns to characters
-    dplyr::mutate(ref = stringr::str_to_upper(ref), alt = stringr::str_to_upper(alt)) %>%
+    dplyr::mutate(ref = stringr::str_to_upper(ref), alt = stringr::str_to_upper(alt)) %>%  # Normalize allele case
     dplyr::group_by(trait, rsid) %>%
-    dplyr::slice_max(log10_pval) %>%
+    dplyr::slice_max(log10_pval) %>%  # Keep the SNP with the highest log10(p-value) per trait
     dplyr::ungroup() %>%
     drop_na()
 
-  # df recombination rate ====
-  ylim <- max(df$log10_pval, na.rm = TRUE) + 0.3 * max(df$log10_pval, na.rm = TRUE)
+  # Extract recombination rate data ====
+  ylim <- max(df$log10_pval, na.rm = TRUE) + 0.3 * max(df$log10_pval, na.rm = TRUE)  # Adjust y-axis limit
   recomb_df <- recomb_extract_locuszoom(
     chrom = unique(df$chromosome),
     start = min(df$position) - 1,
@@ -400,21 +380,21 @@ gg_regionplot <- function(df,
   ) %>%
     select(position, recomb_rate)
 
-  # plot: region ====
+  # Generate the regional association plot ====
   plot_region <- df %>%
     distinct(rsid, .keep_all = TRUE) %>%
     filter(log10_pval > -log10(plot_pvalue_threshold)) %>%
     mutate(
-      size = ifelse(rsid %in% label, 6, 4),
-      color = ifelse(rsid %in% label, "purple", "black"),
-      alpha = ifelse(rsid %in% label, 1, 0.7),
-      shape = ifelse(rsid %in% label, 18, 16)
+      size = ifelse(rsid %in% label, 6, 4),   # Larger size for labeled points
+      color = ifelse(rsid %in% label, "purple", "black"),  # Purple color for labeled points
+      alpha = ifelse(rsid %in% label, 1, 0.7),  # Higher opacity for labeled points
+      shape = ifelse(rsid %in% label, 18, 16)  # Different shape for labeled points
     ) %>%
     ggplot(aes(
-      x = position / 1e6,
+      x = position / 1e6,  # Convert position to Mb
       y = log10_pval)) +
 
-    # Plot recombination rate line first (behind the points)
+    # Add recombination rate line (background layer)
     geom_line(
       data = recomb_df,
       mapping = aes(
@@ -424,21 +404,21 @@ gg_regionplot <- function(df,
       linewidth = 0.5
     ) +
 
-    # Plot non-label points first
+    # Plot non-label points
     geom_point(data = subset(df, !rsid %in% label),
-               aes(size = 4, color = "black", alpha = 0.7, shape = 16)) +
+               aes(size = 4, color = "darkgrey", alpha = 0.7, shape = 16)) +
 
-    # Plot label points on top
+    # Plot label points
     geom_point(data = subset(df, rsid %in% label),
                aes(size = 6, color = "purple", alpha = 1, shape = 18)) +
 
-    # scaling
+    # Set scales for aesthetic mappings
     scale_size_identity() +
     scale_color_identity() +
     scale_alpha_identity() +
     scale_shape_identity() +
 
-    # theme and labels
+    # Add labels and theme
     labs(
       title = plot_title,
       subtitle = plot_subtitle,
@@ -447,37 +427,40 @@ gg_regionplot <- function(df,
     scale_x_continuous(labels = scales::comma) +
     cowplot::theme_cowplot() +
 
-    # add labels for points in 'label'
-    ggrepel::geom_label_repel(
-      data = subset(df, rsid %in% label),
-      aes(label = rsid),
-      size = 4,
-      color = "black",
-      fontface = "bold",
-      fill = "white",
-      min.segment.length = 0,
-      box.padding = 1,
-      alpha = 1,
-      max.overlaps = 100,
-      force = 10
-    ) +
-
-    # Add a dashed horizontal line for significance threshold
+    # Add horizontal significance threshold line
     geom_hline(yintercept = -log10(5E-8), linetype = "dashed")
 
-  # plot with recombination line behind the points
+  # Add recombination rate as a secondary axis
   plot_region <- plot_region +
     scale_y_continuous(
       name = "-log10(P)",
       limits = c(0, ylim),
       sec.axis = sec_axis(
-        ~ . * (100 / ylim),  # Adjust secondary axis scaling
+        ~ . * (100 / ylim),  # Scale secondary axis
         name = "Recombination rate (cM/Mb)"
       )
     ) +
     theme(axis.title.y.right = element_text(vjust = 1.5))
 
-  # gene plot ====
+  # Conditionally add ggrepel labels ====
+  if (labels) {
+    plot_region <- plot_region +
+      ggrepel::geom_label_repel(
+        data = subset(df, rsid %in% label),
+        aes(label = rsid),
+        size = 4,
+        color = "black",
+        fontface = "bold",
+        fill = "white",
+        min.segment.length = 0,
+        box.padding = 1,
+        alpha = 1,
+        max.overlaps = 100,
+        force = 10
+      )
+  }
+
+  # Generate the gene plot ====
   plot_gene <- gg_geneplot(
     chr = unique(df$chromosome),
     start = min(df$position) - 1,
@@ -486,7 +469,7 @@ gg_regionplot <- function(df,
   ) +
     theme(plot.margin = margin(0, 5.5, 5.5, 5.5))
 
-  # combined plot ====
+  # Combine the region and gene plots ====
   plot_region <- patchwork::wrap_plots(list(
     plot_region +
       labs(x = "") +
@@ -502,6 +485,6 @@ gg_regionplot <- function(df,
   heights = c(3, 1)
   )
 
-  # return ====
+  # Return the combined plot ====
   return(plot_region)
 }
