@@ -67,6 +67,8 @@ gg_regionplot(
 \item{plot_title}{The title of the plot. Default is \code{NULL}.}
 
 \item{plot_subtitle}{The subtitle of the plot. Default is \code{NULL}.}
+
+\item{labels}{Logical for whether to show text labels for \code{label} SNPs}
 }
 \value{
 A combined \code{ggplot2} object with the regional association plot and gene annotations.

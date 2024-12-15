@@ -222,6 +222,7 @@ finimom_cs_table <- function(finimom_model, df) {
 #' @param pos Column name for SNP positions (in base pairs) in `df`.
 #' @param p_value Column name for p-values in `df`.
 #' @param label Optional vector of SNP IDs (rsIDs) to label in the plot. Default is NULL.
+#' @param labels Logical for whether to show text labels for `label` SNPs
 #' @param trait Column name for trait or phenotype in `df`. Default is NULL.
 #' @param plot_pvalue_threshold Minimum p-value threshold for points to be plotted. Default is 0.1.
 #' @param genome_build Genome build version for gene and recombination rate annotations. Default is "GRCh38".
@@ -243,6 +244,7 @@ gg_regionplot <- function(df,
                           pos,
                           p_value,
                           label = NULL,
+                          labels = TRUE,
                           trait = NULL,
                           plot_pvalue_threshold = 0.1,
                           genome_build = "GRCh38",
@@ -318,21 +320,6 @@ gg_regionplot <- function(df,
     scale_x_continuous(labels = scales::comma) +
     cowplot::theme_cowplot() +
 
-    # Add point labels
-    ggrepel::geom_label_repel(
-      data = subset(df, rsid %in% label),
-      aes(label = rsid),
-      size = 4,
-      color = "black",
-      fontface = "bold",
-      fill = "white",
-      min.segment.length = 0,
-      box.padding = 1,
-      alpha = 1,
-      max.overlaps = 100,
-      force = 10
-    ) +
-
     # Add horizontal significance threshold line
     geom_hline(yintercept = -log10(5E-8), linetype = "dashed")
 
@@ -347,6 +334,24 @@ gg_regionplot <- function(df,
       )
     ) +
     theme(axis.title.y.right = element_text(vjust = 1.5))
+
+  # Conditionally add ggrepel labels ====
+  if (labels) {
+    plot_region <- plot_region +
+      ggrepel::geom_label_repel(
+        data = subset(df, rsid %in% label),
+        aes(label = rsid),
+        size = 4,
+        color = "black",
+        fontface = "bold",
+        fill = "white",
+        min.segment.length = 0,
+        box.padding = 1,
+        alpha = 1,
+        max.overlaps = 100,
+        force = 10
+      )
+  }
 
   # Generate the gene plot ====
   plot_gene <- gg_geneplot(
