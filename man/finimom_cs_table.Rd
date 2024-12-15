@@ -25,7 +25,7 @@ A data frame summarizing the credible sets with the following columns:
 \item PIP: Posterior inclusion probability for the SNP.
 \item cs: Credible set label (e.g., "L1", "L2").
 \item cs_snps: Comma-separated list of other SNPs in the same credible set.
-\item label: SNP identifier of the SNP with the smallest p-value in each credible set.
+\item label: SNP identifier of the SNP with the smallest p-value in each credible set. We choose P because PIP is equal for SNPs in a CS.
 }
 }
 \description{

@@ -31,7 +31,7 @@ A tibble (data frame) containing the following columns:
 \item \code{cs_snps} A string listing the other SNPs in the same credible set (NA if only one SNP).
 \item \code{cs} The credible set identifier, represented as a factor.
 \item \code{test} A string indicating the test used for generating the table (always "susie").
-\item \code{label} The SNP identifier for the SNP with the highest PIP value within each credible set (NA for other SNPs).
+\item \code{label} The SNP identifier for the SNP with the lowest P value within each credible set (NA for other SNPs).
 }
 }
 \description{
