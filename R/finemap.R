@@ -76,7 +76,7 @@ finemap_pval_LD <- function(df, bfile, pval_threshold = 5E-8, clump_r2 = 0.001) 
 #'   \item \code{cs_snps} A string listing the other SNPs in the same credible set (NA if only one SNP).
 #'   \item \code{cs} The credible set identifier, represented as a factor.
 #'   \item \code{test} A string indicating the test used for generating the table (always "susie").
-#'   \item \code{label} The SNP identifier for the SNP with the highest PIP value within each credible set (NA for other SNPs).
+#'   \item \code{label} The SNP identifier for the SNP with the lowest P value within each credible set (NA for other SNPs).
 #' }
 #' @examples
 #' \dontrun{
@@ -126,7 +126,7 @@ susieR_cs_table <- function(susieR_model, df) {
   table <- table %>%
     dplyr::filter(!is.na(cs)) %>% # Exclude rows where cs is NA
     dplyr::group_by(cs) %>%
-    dplyr::mutate(label = if_else(P == min(P), SNP, NA_character_)) %>%  # Identify SNP with smallest p-value
+    dplyr::mutate(label = if_else(PIP == max(PIP), SNP, NA_character_)) %>%  # Identify SNP with largest PIP
     dplyr::ungroup() %>%
     dplyr::bind_rows(table %>% dplyr::filter(is.na(cs))) %>% # Add back rows with NA cs
     dplyr::mutate(test = "SuSiE")
@@ -157,7 +157,7 @@ susieR_cs_table <- function(susieR_model, df) {
 #'   \item PIP: Posterior inclusion probability for the SNP.
 #'   \item cs: Credible set label (e.g., "L1", "L2").
 #'   \item cs_snps: Comma-separated list of other SNPs in the same credible set.
-#'   \item label: SNP identifier of the SNP with the smallest p-value in each credible set.
+#'   \item label: SNP identifier of the SNP with the smallest p-value in each credible set. We choose P because PIP is equal for SNPs in a CS.
 #' }
 #'
 #' @export
