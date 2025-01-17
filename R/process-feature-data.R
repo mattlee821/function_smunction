@@ -263,10 +263,7 @@ process_data <- function(
     if(LABEL_outlier){
       cat("## saving outlier plots \n")
       tiff(paste0(path_outliers, "plot-outliers_", LABEL, ".tiff"), width = 1500, height = 1500, units = "px")
-      print(cowplot::plot_grid(
-        GGally::ggmatrix_gtable(plot_samples),
-        GGally::ggmatrix_gtable(plot_features),
-        nrow = 2))
+      print(plot_samples_outlier)
       dev.off()
     }
     ## save excluded IDs ====
@@ -990,7 +987,7 @@ transform_data <- function(df,
 #'                               df_samples = df_samples,
 #'                               df_features = df_features)
 #'   print(result$filtered_df)
-#'   print(result$plot_samples)
+#'   print(result$plot_samples_outlier)
 #'   print(result$excluded_samples)
 #' }
 outlier_pca_lof <- function(df,
